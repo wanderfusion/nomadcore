@@ -1,15 +1,26 @@
 package auth
 
-type UserAuthReq struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
-}
+import "github.com/google/uuid"
 
-type UpdateUserReq struct {
-	Username   string `json:"username"`
-	ProfilePic string `json:"profilePic"`
+// Req --------------------------------------------------------------------------------------------
+type CreateCalendarReq struct {
+	Name       string `json:"name"`
+	Visibility string `json:"visibility"`
 }
 
 type JwtVerifyRequest struct {
 	Jwt string `json:"jwt"`
+}
+
+// Res --------------------------------------------------------------------------------------------
+
+type GetPublicCalendarsRes struct {
+	Calendars []CalendarDTO `json:"calendars"`
+}
+
+// DTOs -------------------------------------------------------------------------------------------
+type CalendarDTO struct {
+	ID         uuid.UUID `json:"uuid"`
+	Name       string    `json:"name"`
+	Visibility string    `json:"visibility"`
 }

@@ -3,7 +3,6 @@ package auth
 import (
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
-	"golang.org/x/crypto/bcrypt"
 
 	"github.com/akxcix/nomadcore/pkg/config"
 	"github.com/akxcix/nomadcore/pkg/jwt"
@@ -35,64 +34,59 @@ func New(dbConf *config.DatabaseConfig, jwtConf *config.Jwt) *Service {
 	return svc
 }
 
-func (s *Service) RegisterUser(username, password string) (string, error) {
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), 8)
+func (s *Service) CreateCalendar(userId uuid.UUID, name, visibility string) (string, error) {
+	err := s.AuthRepo.CreateCalendar(userId, name, visibility)
 	if err != nil {
 		return "", err
 	}
 
-	err = s.AuthRepo.RegisterUser(username, string(hashedPassword))
-	if err != nil {
-		return "", err
-	}
-
-	msg := "Sign up successful"
+	msg := "Successfully added calendar"
 	return msg, nil
 }
 
-func (s *Service) LoginUser(email, password string) (string, error) {
-	user, err := s.AuthRepo.FetchUserDataByEmail(email)
-	if err != nil {
-		return "", err
-	}
+// func (s *Service) LoginUser(email, password string) (string, error) {
+// 	user, err := s.AuthRepo.FetchUserDataByEmail(email)
+// 	if err != nil {
+// 		return "", err
+// 	}
 
-	err = bcrypt.CompareHashAndPassword([]byte(user.HashedPassword), []byte(password))
-	if err != nil {
-		return "", err
-	}
+// 	err = bcrypt.CompareHashAndPassword([]byte(user.HashedPassword), []byte(password))
+// 	if err != nil {
+// 		return "", err
+// 	}
 
-	username := ""
-	profilePic := ""
+// 	username := ""
+// 	profilePic := ""
 
-	if user.Username != nil {
-		username = *user.Username
-	}
+// 	if user.Username != nil {
+// 		username = *user.Username
+// 	}
 
-	if user.ProfilePic != nil {
-		profilePic = *user.ProfilePic
-	}
+// 	if user.ProfilePic != nil {
+// 		profilePic = *user.ProfilePic
+// 	}
 
-	jwtString, err := s.JwtManager.GenerateJWT(user.ID, email, username, profilePic)
-	return jwtString, err
-}
+// 	jwtString, err := s.JwtManager.GenerateJWT(user.ID, email, username, profilePic)
+// 	return jwtString, err
+// }
 
-func (s *Service) UpdateUser(id uuid.UUID, username, profilePic string) error {
-	user := auth.User{}
-	user.ID = id
+// func (s *Service) UpdateUser(id uuid.UUID, username, profilePic string) error {
+// 	user := auth.User{}
+// 	user.ID = id
 
-	user.Username = &username
-	if username == "" {
-		user.Username = nil
-	}
+// 	user.Username = &username
+// 	if username == "" {
+// 		user.Username = nil
+// 	}
 
-	user.ProfilePic = &profilePic
-	if profilePic == "" {
-		user.ProfilePic = nil
-	}
+// 	user.ProfilePic = &profilePic
+// 	if profilePic == "" {
+// 		user.ProfilePic = nil
+// 	}
 
-	err := s.AuthRepo.UpdateUserProfile(user)
-	return err
-}
+// 	err := s.AuthRepo.UpdateUserProfile(user)
+// 	return err
+// }
 
 func (s *Service) ValidateJwt(token string) (*jwt.Claims, bool) {
 	claims, err := s.JwtManager.Verify(token)

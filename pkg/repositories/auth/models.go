@@ -12,10 +12,16 @@ type BaseTable struct {
 	UpdatedAt time.Time `db:"updated_at"`
 }
 
-type User struct {
+type Calendars struct {
 	BaseTable
-	Email          string  `db:"email"`
-	HashedPassword string  `db:"hashed_password"`
-	Username       *string `db:"username"`
-	ProfilePic     *string `db:"profile_picture"`
+	UserId     string `db:"user_id"`
+	Name       string `db:"name"`
+	Visibility string `db:"visibility"`
+}
+
+type Dates struct {
+	BaseTable
+	FromDate   time.Time `db:"from_date"`
+	ToDate     time.Time `db:"from_date"`
+	CalendarId uuid.UUID `db:"calendar_id"`
 }

@@ -27,10 +27,8 @@ func createRoutes(authService *auth.Service) *chi.Mux {
 	r.Get("/health", handlers.HealthCheck)
 
 	authHandlers := authHandlers.New(authService)
-	r.Post("/users/register", authHandlers.RegisterUser)
-	r.Post("/users/login", authHandlers.LoginUser)
-	r.Post("/users/verify", authHandlers.ValidateJwt)
-	r.Post("/users/update", authHandlers.AuthMiddleware(authHandlers.UpdateUser))
+	r.Post("/calendars/new", authHandlers.AuthMiddleware(authHandlers.CreateCalendar))
+	r.Get("/users/calendars/public", authHandlers.AuthMiddleware(authHandlers.GetPublicCalendars))
 
 	return r
 }

@@ -2,7 +2,6 @@ package auth
 
 import (
 	"context"
-	"errors"
 	"net/http"
 	"strings"
 
@@ -23,93 +22,124 @@ func New(s *auth.Service) *Handlers {
 	return &h
 }
 
-func (h *Handlers) RegisterUser(w http.ResponseWriter, r *http.Request) {
-	var req UserAuthReq
-	if err := handlers.FromRequest(r, &req); err != nil {
-		handlers.RespondWithError(w, r, err, http.StatusBadRequest)
-		return
-	}
+// func (h *Handlers) RegisterUser(w http.ResponseWriter, r *http.Request) {
+// 	var req UserAuthReq
+// 	if err := handlers.FromRequest(r, &req); err != nil {
+// 		handlers.RespondWithError(w, r, err, http.StatusBadRequest)
+// 		return
+// 	}
 
-	if req.Email == "" {
-		handlers.RespondWithError(w, r, errors.New("email is empty"), http.StatusBadRequest)
-		return
-	}
+// 	if req.Email == "" {
+// 		handlers.RespondWithError(w, r, errors.New("email is empty"), http.StatusBadRequest)
+// 		return
+// 	}
 
-	if req.Password == "" {
-		handlers.RespondWithError(w, r, errors.New("password is empty"), http.StatusBadRequest)
-		return
-	}
+// 	if req.Password == "" {
+// 		handlers.RespondWithError(w, r, errors.New("password is empty"), http.StatusBadRequest)
+// 		return
+// 	}
 
-	msg, err := h.Service.RegisterUser(req.Email, req.Password)
-	if err != nil {
-		handlers.RespondWithError(w, r, err, http.StatusInternalServerError)
-		return
-	}
+// 	msg, err := h.Service.RegisterUser(req.Email, req.Password)
+// 	if err != nil {
+// 		handlers.RespondWithError(w, r, err, http.StatusInternalServerError)
+// 		return
+// 	}
 
-	handlers.RespondWithData(w, r, msg)
-}
+// 	handlers.RespondWithData(w, r, msg)
+// }
 
-func (h *Handlers) LoginUser(w http.ResponseWriter, r *http.Request) {
-	var req UserAuthReq
-	if err := handlers.FromRequest(r, &req); err != nil {
-		handlers.RespondWithError(w, r, err, http.StatusBadRequest)
-		return
-	}
+// func (h *Handlers) LoginUser(w http.ResponseWriter, r *http.Request) {
+// 	var req UserAuthReq
+// 	if err := handlers.FromRequest(r, &req); err != nil {
+// 		handlers.RespondWithError(w, r, err, http.StatusBadRequest)
+// 		return
+// 	}
 
-	if req.Email == "" {
-		handlers.RespondWithError(w, r, errors.New("email is empty"), http.StatusBadRequest)
-		return
-	}
+// 	if req.Email == "" {
+// 		handlers.RespondWithError(w, r, errors.New("email is empty"), http.StatusBadRequest)
+// 		return
+// 	}
 
-	if req.Password == "" {
-		handlers.RespondWithError(w, r, errors.New("password is empty"), http.StatusBadRequest)
-		return
-	}
+// 	if req.Password == "" {
+// 		handlers.RespondWithError(w, r, errors.New("password is empty"), http.StatusBadRequest)
+// 		return
+// 	}
 
-	msg, err := h.Service.LoginUser(req.Email, req.Password)
-	if err != nil {
-		handlers.RespondWithError(w, r, err, http.StatusInternalServerError)
-		return
-	}
+// 	msg, err := h.Service.LoginUser(req.Email, req.Password)
+// 	if err != nil {
+// 		handlers.RespondWithError(w, r, err, http.StatusInternalServerError)
+// 		return
+// 	}
 
-	handlers.RespondWithData(w, r, msg)
-}
+// 	handlers.RespondWithData(w, r, msg)
+// }
 
-func (h *Handlers) ValidateJwt(w http.ResponseWriter, r *http.Request) {
-	var req JwtVerifyRequest
-	if err := handlers.FromRequest(r, &req); err != nil {
-		handlers.RespondWithError(w, r, err, http.StatusBadRequest)
-		return
-	}
+// func (h *Handlers) ValidateJwt(w http.ResponseWriter, r *http.Request) {
+// 	var req JwtVerifyRequest
+// 	if err := handlers.FromRequest(r, &req); err != nil {
+// 		handlers.RespondWithError(w, r, err, http.StatusBadRequest)
+// 		return
+// 	}
 
-	_, isValid := h.Service.ValidateJwt(req.Jwt)
-	if !isValid {
-		handlers.RespondWithError(w, r, ErrInvalidJwt, http.StatusUnauthorized)
-		return
-	}
+// 	_, isValid := h.Service.ValidateJwt(req.Jwt)
+// 	if !isValid {
+// 		handlers.RespondWithError(w, r, ErrInvalidJwt, http.StatusUnauthorized)
+// 		return
+// 	}
 
-	handlers.RespondWithData(w, r, true)
-}
+// 	handlers.RespondWithData(w, r, true)
+// }
 
-func (h *Handlers) UpdateUser(w http.ResponseWriter, r *http.Request) {
+func (h *Handlers) CreateCalendar(w http.ResponseWriter, r *http.Request) {
 	userID, ok := r.Context().Value(handlers.UserIdContextKey).(uuid.UUID)
 	if !ok {
 		handlers.RespondWithError(w, r, ErrInvalidJwt, http.StatusBadRequest)
 		return
 	}
-	var req UpdateUserReq
+	var req CreateCalendarReq
 	if err := handlers.FromRequest(r, &req); err != nil {
 		handlers.RespondWithError(w, r, err, http.StatusBadRequest)
 		return
 	}
 
-	err := h.Service.UpdateUser(userID, req.Username, req.ProfilePic)
+	err := h.Service.AuthRepo.CreateCalendar(userID, req.Name, req.Visibility)
 	if err != nil {
 		handlers.RespondWithError(w, r, err, http.StatusInternalServerError)
 		return
 	}
 
 	handlers.RespondWithData(w, r, "update successful")
+}
+
+func (h *Handlers) GetPublicCalendars(w http.ResponseWriter, r *http.Request) {
+	userID, ok := r.Context().Value(handlers.UserIdContextKey).(uuid.UUID)
+	if !ok {
+		handlers.RespondWithError(w, r, ErrInvalidJwt, http.StatusBadRequest)
+		return
+	}
+
+	calendars, err := h.Service.AuthRepo.GetPublicCalendars(userID)
+	if err != nil {
+		handlers.RespondWithError(w, r, err, http.StatusInternalServerError)
+		return
+	}
+
+	calendarDtos := make([]CalendarDTO, 0)
+	for _, cal := range calendars {
+		calDto := CalendarDTO{
+			ID:         cal.ID,
+			Name:       cal.Name,
+			Visibility: cal.Visibility,
+		}
+
+		calendarDtos = append(calendarDtos, calDto)
+	}
+
+	res := GetPublicCalendarsRes{
+		Calendars: calendarDtos,
+	}
+
+	handlers.RespondWithData(w, r, res)
 }
 
 func (h *Handlers) AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
