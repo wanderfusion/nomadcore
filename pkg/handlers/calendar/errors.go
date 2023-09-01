@@ -1,4 +1,4 @@
-package auth
+package calendar
 
 import "errors"
 

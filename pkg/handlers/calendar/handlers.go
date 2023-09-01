@@ -1,4 +1,4 @@
-package auth
+package calendar
 
 import (
 	"context"
@@ -6,89 +6,21 @@ import (
 	"strings"
 
 	"github.com/akxcix/nomadcore/pkg/handlers"
-	"github.com/akxcix/nomadcore/pkg/services/auth"
+	"github.com/akxcix/nomadcore/pkg/services/calendar"
 	"github.com/google/uuid"
 )
 
 type Handlers struct {
-	Service *auth.Service
+	Service *calendar.Service
 }
 
-func New(s *auth.Service) *Handlers {
+func New(s *calendar.Service) *Handlers {
 	h := Handlers{
 		Service: s,
 	}
 
 	return &h
 }
-
-// func (h *Handlers) RegisterUser(w http.ResponseWriter, r *http.Request) {
-// 	var req UserAuthReq
-// 	if err := handlers.FromRequest(r, &req); err != nil {
-// 		handlers.RespondWithError(w, r, err, http.StatusBadRequest)
-// 		return
-// 	}
-
-// 	if req.Email == "" {
-// 		handlers.RespondWithError(w, r, errors.New("email is empty"), http.StatusBadRequest)
-// 		return
-// 	}
-
-// 	if req.Password == "" {
-// 		handlers.RespondWithError(w, r, errors.New("password is empty"), http.StatusBadRequest)
-// 		return
-// 	}
-
-// 	msg, err := h.Service.RegisterUser(req.Email, req.Password)
-// 	if err != nil {
-// 		handlers.RespondWithError(w, r, err, http.StatusInternalServerError)
-// 		return
-// 	}
-
-// 	handlers.RespondWithData(w, r, msg)
-// }
-
-// func (h *Handlers) LoginUser(w http.ResponseWriter, r *http.Request) {
-// 	var req UserAuthReq
-// 	if err := handlers.FromRequest(r, &req); err != nil {
-// 		handlers.RespondWithError(w, r, err, http.StatusBadRequest)
-// 		return
-// 	}
-
-// 	if req.Email == "" {
-// 		handlers.RespondWithError(w, r, errors.New("email is empty"), http.StatusBadRequest)
-// 		return
-// 	}
-
-// 	if req.Password == "" {
-// 		handlers.RespondWithError(w, r, errors.New("password is empty"), http.StatusBadRequest)
-// 		return
-// 	}
-
-// 	msg, err := h.Service.LoginUser(req.Email, req.Password)
-// 	if err != nil {
-// 		handlers.RespondWithError(w, r, err, http.StatusInternalServerError)
-// 		return
-// 	}
-
-// 	handlers.RespondWithData(w, r, msg)
-// }
-
-// func (h *Handlers) ValidateJwt(w http.ResponseWriter, r *http.Request) {
-// 	var req JwtVerifyRequest
-// 	if err := handlers.FromRequest(r, &req); err != nil {
-// 		handlers.RespondWithError(w, r, err, http.StatusBadRequest)
-// 		return
-// 	}
-
-// 	_, isValid := h.Service.ValidateJwt(req.Jwt)
-// 	if !isValid {
-// 		handlers.RespondWithError(w, r, ErrInvalidJwt, http.StatusUnauthorized)
-// 		return
-// 	}
-
-// 	handlers.RespondWithData(w, r, true)
-// }
 
 func (h *Handlers) CreateCalendar(w http.ResponseWriter, r *http.Request) {
 	userID, ok := r.Context().Value(handlers.UserIdContextKey).(uuid.UUID)
@@ -102,7 +34,7 @@ func (h *Handlers) CreateCalendar(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := h.Service.AuthRepo.CreateCalendar(userID, req.Name, req.Visibility)
+	err := h.Service.CalRepo.CreateCalendar(userID, req.Name, req.Visibility)
 	if err != nil {
 		handlers.RespondWithError(w, r, err, http.StatusInternalServerError)
 		return
@@ -118,7 +50,7 @@ func (h *Handlers) GetPublicCalendars(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	calendars, err := h.Service.AuthRepo.GetPublicCalendars(userID)
+	calendars, err := h.Service.CalRepo.GetPublicCalendars(userID)
 	if err != nil {
 		handlers.RespondWithError(w, r, err, http.StatusInternalServerError)
 		return

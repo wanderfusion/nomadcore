@@ -1,4 +1,4 @@
-package auth
+package calendar
 
 import (
 	"github.com/google/uuid"

@@ -2,14 +2,14 @@ package app
 
 import (
 	"github.com/akxcix/nomadcore/pkg/handlers"
-	authHandlers "github.com/akxcix/nomadcore/pkg/handlers/auth"
-	"github.com/akxcix/nomadcore/pkg/services/auth"
+	calHandlers "github.com/akxcix/nomadcore/pkg/handlers/calendar"
+	"github.com/akxcix/nomadcore/pkg/services/calendar"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
 )
 
-func createRoutes(authService *auth.Service) *chi.Mux {
+func createRoutes(calService *calendar.Service) *chi.Mux {
 	r := chi.NewRouter()
 
 	// global middlewares
@@ -26,7 +26,7 @@ func createRoutes(authService *auth.Service) *chi.Mux {
 	// general routes
 	r.Get("/health", handlers.HealthCheck)
 
-	authHandlers := authHandlers.New(authService)
+	authHandlers := calHandlers.New(calService)
 	r.Post("/calendars/new", authHandlers.AuthMiddleware(authHandlers.CreateCalendar))
 	r.Get("/users/calendars/public", authHandlers.AuthMiddleware(authHandlers.GetPublicCalendars))
 

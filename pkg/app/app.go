@@ -5,16 +5,16 @@ import (
 	"net/http"
 
 	"github.com/akxcix/nomadcore/pkg/config"
-	"github.com/akxcix/nomadcore/pkg/services/auth"
+	"github.com/akxcix/nomadcore/pkg/services/calendar"
 	"github.com/go-chi/chi/v5"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 )
 
 type application struct {
-	Config      *config.Config
-	AuthService *auth.Service
-	Routes      *chi.Mux
+	Config     *config.Config
+	CalService *calendar.Service
+	Routes     *chi.Mux
 }
 
 func readConfigs() *config.Config {
@@ -26,12 +26,12 @@ func readConfigs() *config.Config {
 	return config
 }
 
-func createServices(conf *config.Config) *auth.Service {
+func createServices(conf *config.Config) *calendar.Service {
 	if conf == nil {
 		log.Fatal().Msg("Conf is nil")
 	}
 
-	authService := auth.New(conf.Database, conf.Jwt)
+	authService := calendar.New(conf.Database, conf.Jwt)
 
 	return authService
 }
@@ -39,13 +39,13 @@ func createServices(conf *config.Config) *auth.Service {
 func new() *application {
 	config := readConfigs()
 
-	authService := createServices(config)
-	routes := createRoutes(authService)
+	calService := createServices(config)
+	routes := createRoutes(calService)
 
 	app := application{
-		Config:      config,
-		AuthService: authService,
-		Routes:      routes,
+		Config:     config,
+		CalService: calService,
+		Routes:     routes,
 	}
 
 	return &app
