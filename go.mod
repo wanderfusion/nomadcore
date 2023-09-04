@@ -11,7 +11,6 @@ require (
 	github.com/jmoiron/sqlx v1.3.5
 	github.com/lib/pq v1.10.9
 	github.com/rs/zerolog v1.30.0
-	github.com/ulule/limiter v2.2.2+incompatible
 	github.com/ulule/limiter/v3 v3.11.2
 	gopkg.in/yaml.v2 v2.4.0
 )
