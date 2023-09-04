@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/akxcix/nomadcore/pkg/config"
+	"github.com/akxcix/nomadcore/pkg/services/auth"
 	"github.com/akxcix/nomadcore/pkg/services/calendar"
 	"github.com/go-chi/chi/v5"
 	"github.com/rs/zerolog"
@@ -12,9 +13,9 @@ import (
 )
 
 type application struct {
-	Config     *config.Config
-	CalService *calendar.Service
-	Routes     *chi.Mux
+	host   string
+	port   string
+	routes *chi.Mux
 }
 
 func readConfigs() *config.Config {
@@ -26,26 +27,27 @@ func readConfigs() *config.Config {
 	return config
 }
 
-func createServices(conf *config.Config) *calendar.Service {
+func createServices(conf *config.Config) (*auth.Service, *calendar.Service) {
 	if conf == nil {
 		log.Fatal().Msg("Conf is nil")
 	}
 
-	authService := calendar.New(conf.Database, conf.Jwt)
+	authService := auth.New(conf.Jwt)
+	calService := calendar.New(conf.Database)
 
-	return authService
+	return authService, calService
 }
 
 func new() *application {
 	config := readConfigs()
 
-	calService := createServices(config)
-	routes := createRoutes(calService)
+	authService, calService := createServices(config)
+	routes := createRoutes(authService, calService)
 
 	app := application{
-		Config:     config,
-		CalService: calService,
-		Routes:     routes,
+		host:   config.Server.Host,
+		port:   config.Server.Port,
+		routes: routes,
 	}
 
 	return &app
@@ -56,8 +58,8 @@ func Run() {
 
 	app := new()
 
-	addr := fmt.Sprintf("%s:%s", app.Config.Server.Host, app.Config.Server.Port)
+	addr := fmt.Sprintf("%s:%s", app.host, app.port)
 	log.Info().Msg(fmt.Sprintf("Running application at %s", addr))
-	err := http.ListenAndServe(addr, app.Routes)
+	err := http.ListenAndServe(addr, app.routes)
 	log.Fatal().Err(err).Msg("Crashed")
 }

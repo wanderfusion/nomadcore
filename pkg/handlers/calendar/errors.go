@@ -3,5 +3,5 @@ package calendar
 import "errors"
 
 var (
-	ErrInvalidJwt = errors.New("invalid jwt")
+	ErrContextInvalid = errors.New("invalid context")
 )

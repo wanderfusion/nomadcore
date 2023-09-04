@@ -1,12 +1,11 @@
 package calendar
 
 import (
-	"context"
 	"net/http"
-	"strings"
 
 	"github.com/akxcix/nomadcore/pkg/handlers"
 	"github.com/akxcix/nomadcore/pkg/services/calendar"
+
 	"github.com/google/uuid"
 )
 
@@ -25,7 +24,7 @@ func New(s *calendar.Service) *Handlers {
 func (h *Handlers) CreateCalendar(w http.ResponseWriter, r *http.Request) {
 	userID, ok := r.Context().Value(handlers.UserIdContextKey).(uuid.UUID)
 	if !ok {
-		handlers.RespondWithError(w, r, ErrInvalidJwt, http.StatusBadRequest)
+		handlers.RespondWithError(w, r, ErrContextInvalid, http.StatusInternalServerError)
 		return
 	}
 	var req CreateCalendarReq
@@ -34,23 +33,23 @@ func (h *Handlers) CreateCalendar(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := h.Service.CalRepo.CreateCalendar(userID, req.Name, req.Visibility)
+	msg, err := h.Service.CreateCalendar(userID, req.Name, req.Visibility)
 	if err != nil {
 		handlers.RespondWithError(w, r, err, http.StatusInternalServerError)
 		return
 	}
 
-	handlers.RespondWithData(w, r, "update successful")
+	handlers.RespondWithData(w, r, msg)
 }
 
 func (h *Handlers) GetPublicCalendars(w http.ResponseWriter, r *http.Request) {
 	userID, ok := r.Context().Value(handlers.UserIdContextKey).(uuid.UUID)
 	if !ok {
-		handlers.RespondWithError(w, r, ErrInvalidJwt, http.StatusBadRequest)
+		handlers.RespondWithError(w, r, ErrContextInvalid, http.StatusInternalServerError)
 		return
 	}
 
-	calendars, err := h.Service.CalRepo.GetPublicCalendars(userID)
+	calendars, err := h.Service.GetCalendars(userID, "public")
 	if err != nil {
 		handlers.RespondWithError(w, r, err, http.StatusInternalServerError)
 		return
@@ -61,7 +60,7 @@ func (h *Handlers) GetPublicCalendars(w http.ResponseWriter, r *http.Request) {
 		calDto := CalendarDTO{
 			ID:         cal.ID,
 			Name:       cal.Name,
-			Visibility: cal.Visibility,
+			Visibility: string(cal.Visibility),
 		}
 
 		calendarDtos = append(calendarDtos, calDto)
@@ -74,34 +73,27 @@ func (h *Handlers) GetPublicCalendars(w http.ResponseWriter, r *http.Request) {
 	handlers.RespondWithData(w, r, res)
 }
 
-func (h *Handlers) AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		bearerToken := r.Header.Get("Authorization")
-
-		// Check if token exists
-		if bearerToken == "" {
-			handlers.RespondWithError(w, r, ErrInvalidJwt, http.StatusUnauthorized)
-			return
-		}
-
-		// Extract token from header
-		tokenParts := strings.Split(bearerToken, " ")
-		if len(tokenParts) != 2 {
-			handlers.RespondWithError(w, r, ErrInvalidJwt, http.StatusUnauthorized)
-			return
-		}
-		tokenString := tokenParts[1]
-
-		// Validate token
-		claims, isValid := h.Service.ValidateJwt(tokenString)
-		if claims == nil || !isValid {
-			handlers.RespondWithError(w, r, ErrInvalidJwt, http.StatusUnauthorized)
-			return
-		}
-
-		ctx := context.WithValue(r.Context(), handlers.UserIdContextKey, claims.ID)
-
-		// If token is valid, forward to the actual handler
-		next.ServeHTTP(w, r.WithContext(ctx))
+func (h *Handlers) AddDatesToCalendar(w http.ResponseWriter, r *http.Request) {
+	userID, ok := r.Context().Value(handlers.UserIdContextKey).(uuid.UUID)
+	if !ok {
+		handlers.RespondWithError(w, r, ErrContextInvalid, http.StatusInternalServerError)
+		return
 	}
+	var req AddDatesToCalendarReq
+	if err := handlers.FromRequest(r, &req); err != nil {
+		handlers.RespondWithError(w, r, err, http.StatusBadRequest)
+		return
+	}
+
+	dates := calendar.Dates{
+		From: req.Dates.From,
+		To:   req.Dates.To,
+	}
+	msg, err := h.Service.AddDatesToCalendar(userID, req.CalendarID, dates)
+	if err != nil {
+		handlers.RespondWithError(w, r, err, http.StatusInternalServerError)
+		return
+	}
+
+	handlers.RespondWithData(w, r, msg)
 }

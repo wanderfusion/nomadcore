@@ -1,6 +1,10 @@
 package calendar
 
-import "github.com/google/uuid"
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
 
 // Req --------------------------------------------------------------------------------------------
 type CreateCalendarReq struct {
@@ -8,8 +12,9 @@ type CreateCalendarReq struct {
 	Visibility string `json:"visibility"`
 }
 
-type JwtVerifyRequest struct {
-	Jwt string `json:"jwt"`
+type AddDatesToCalendarReq struct {
+	CalendarID uuid.UUID `json:"calendarId"`
+	Dates      DateDTO   `json:"dates"`
 }
 
 // Res --------------------------------------------------------------------------------------------
@@ -20,7 +25,12 @@ type GetPublicCalendarsRes struct {
 
 // DTOs -------------------------------------------------------------------------------------------
 type CalendarDTO struct {
-	ID         uuid.UUID `json:"uuid"`
+	ID         uuid.UUID `json:"id"`
 	Name       string    `json:"name"`
 	Visibility string    `json:"visibility"`
+}
+
+type DateDTO struct {
+	From time.Time `json:"from"`
+	To   time.Time `json:"to"`
 }

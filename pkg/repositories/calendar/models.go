@@ -6,20 +6,27 @@ import (
 	"github.com/google/uuid"
 )
 
+type Visibility string
+
+const (
+	Public  Visibility = "public"
+	Private Visibility = "private"
+)
+
 type BaseTable struct {
 	ID        uuid.UUID `db:"id"`
 	CreatedAt time.Time `db:"created_at"`
 	UpdatedAt time.Time `db:"updated_at"`
 }
 
-type Calendars struct {
+type Calendar struct {
 	BaseTable
-	UserId     string `db:"user_id"`
-	Name       string `db:"name"`
-	Visibility string `db:"visibility"`
+	UserId     string     `db:"user_id"`
+	Name       string     `db:"name"`
+	Visibility Visibility `db:"visibility"`
 }
 
-type Dates struct {
+type Date struct {
 	BaseTable
 	FromDate   time.Time `db:"from_date"`
 	ToDate     time.Time `db:"from_date"`
