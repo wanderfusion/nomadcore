@@ -55,19 +55,48 @@ func (h *Handlers) GetPublicCalendars(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	calendarDtos := make([]CalendarDTO, 0)
+	calendarIds := make([]uuid.UUID, 0)
+	for _, calendar := range calendars {
+		calendarIds = append(calendarIds, calendar.ID)
+	}
+
+	dates, err := h.Service.GetDates(calendarIds)
+	if err != nil {
+		handlers.RespondWithError(w, r, err, http.StatusInternalServerError)
+		return
+	}
+
+	dateMap := make(map[uuid.UUID][]DateDTO)
+	for _, date := range dates {
+		if _, exists := dateMap[date.CalendarId]; !exists {
+			dateMap[date.CalendarId] = make([]DateDTO, 0)
+		}
+
+		dateSlice := dateMap[date.CalendarId]
+		dateSlice = append(dateSlice, DateDTO{
+			ID:   date.ID,
+			From: date.FromDate,
+			To:   date.ToDate,
+		})
+		dateMap[date.CalendarId] = dateSlice
+	}
+
+	calendarDTOs := make([]CalendarDTO, 0)
 	for _, cal := range calendars {
+		dateDtos := dateMap[cal.ID]
+
 		calDto := CalendarDTO{
 			ID:         cal.ID,
 			Name:       cal.Name,
 			Visibility: string(cal.Visibility),
+			Dates:      dateDtos,
 		}
 
-		calendarDtos = append(calendarDtos, calDto)
+		calendarDTOs = append(calendarDTOs, calDto)
 	}
 
 	res := GetPublicCalendarsRes{
-		Calendars: calendarDtos,
+		Calendars: calendarDTOs,
 	}
 
 	handlers.RespondWithData(w, r, res)

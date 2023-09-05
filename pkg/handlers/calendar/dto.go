@@ -28,9 +28,11 @@ type CalendarDTO struct {
 	ID         uuid.UUID `json:"id"`
 	Name       string    `json:"name"`
 	Visibility string    `json:"visibility"`
+	Dates      []DateDTO `json:"dates"`
 }
 
 type DateDTO struct {
+	ID   uuid.UUID `json:"id"`
 	From time.Time `json:"from"`
 	To   time.Time `json:"to"`
 }

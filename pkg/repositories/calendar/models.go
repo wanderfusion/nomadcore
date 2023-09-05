@@ -6,6 +6,7 @@ import (
 	"github.com/google/uuid"
 )
 
+// base types -------------------------------------------------------------------------------------
 type Visibility string
 
 const (
@@ -29,6 +30,6 @@ type Calendar struct {
 type Date struct {
 	BaseTable
 	FromDate   time.Time `db:"from_date"`
-	ToDate     time.Time `db:"from_date"`
+	ToDate     time.Time `db:"to_date"`
 	CalendarId uuid.UUID `db:"calendar_id"`
 }

@@ -27,23 +27,35 @@ func New(dbConf *config.DatabaseConfig) *Service {
 	return svc
 }
 
-func (s *Service) CreateCalendar(userId uuid.UUID, name, visibility string) (string, error) {
+func (s *Service) CreateCalendar(userId uuid.UUID, name, visibility string) (string, services.ServiceError) {
 	err := s.calRepo.CreateCalendar(userId, name, visibility)
 	if err != nil {
-		return "", err
+		log.Error().Err(err).Msg("unable to add calendar to DB")
+		return "", ErrFailedDBWrite
 	}
 
 	msg := "Successfully added calendar"
 	return msg, nil
 }
 
-func (s *Service) GetCalendars(userID uuid.UUID, visibility string) ([]calendar.Calendar, error) {
+func (s *Service) GetCalendars(userID uuid.UUID, visibility string) ([]calendar.Calendar, services.ServiceError) {
 	calendars, err := s.calRepo.GetCalendars(userID, calendar.Visibility(visibility))
 	if err != nil {
-		return nil, err
+		log.Error().Err(err).Msg("unable to get calendars from DB")
+		return nil, ErrFailedDBRead
 	}
 
 	return calendars, nil
+}
+
+func (s *Service) GetDates(calendarIDs []uuid.UUID) ([]calendar.Date, services.ServiceError) {
+	dates, err := s.calRepo.GetDates(calendarIDs)
+	if err != nil {
+		log.Error().Err(err).Msg("unable to get dates from DB")
+		return nil, ErrFailedDBRead
+	}
+
+	return dates, nil
 }
 
 func (s *Service) AddDatesToCalendar(userID, calendarID uuid.UUID, dates Dates) (string, services.ServiceError) {
