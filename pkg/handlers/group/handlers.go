@@ -1,19 +1,19 @@
-package calendar
+package group
 
 import (
 	"net/http"
 
 	"github.com/akxcix/nomadcore/pkg/handlers"
-	"github.com/akxcix/nomadcore/pkg/services/calendar"
+	"github.com/akxcix/nomadcore/pkg/services/group"
 
 	"github.com/google/uuid"
 )
 
 type Handlers struct {
-	Service *calendar.Service
+	Service *group.Service
 }
 
-func New(s *calendar.Service) *Handlers {
+func New(s *group.Service) *Handlers {
 	h := Handlers{
 		Service: s,
 	}
@@ -21,19 +21,19 @@ func New(s *calendar.Service) *Handlers {
 	return &h
 }
 
-func (h *Handlers) CreateCalendar(w http.ResponseWriter, r *http.Request) {
+func (h *Handlers) CreateGroup(w http.ResponseWriter, r *http.Request) {
 	userID, ok := r.Context().Value(handlers.UserIdContextKey).(uuid.UUID)
 	if !ok {
 		handlers.RespondWithError(w, r, ErrContextInvalid, http.StatusInternalServerError)
 		return
 	}
-	var req CreateCalendarReq
+	var req CreateGroupReq
 	if err := handlers.FromRequest(r, &req); err != nil {
 		handlers.RespondWithError(w, r, err, http.StatusBadRequest)
 		return
 	}
 
-	msg, err := h.Service.CreateCalendar(userID, req.Name, req.Visibility)
+	msg, err := h.Service.CreateGroup(userID, req.Name, req.Description)
 	if err != nil {
 		handlers.RespondWithError(w, r, err, http.StatusInternalServerError)
 		return
@@ -42,25 +42,25 @@ func (h *Handlers) CreateCalendar(w http.ResponseWriter, r *http.Request) {
 	handlers.RespondWithData(w, r, msg)
 }
 
-func (h *Handlers) GetPublicCalendars(w http.ResponseWriter, r *http.Request) {
+func (h *Handlers) GetGroups(w http.ResponseWriter, r *http.Request) {
 	userID, ok := r.Context().Value(handlers.UserIdContextKey).(uuid.UUID)
 	if !ok {
 		handlers.RespondWithError(w, r, ErrContextInvalid, http.StatusInternalServerError)
 		return
 	}
 
-	calendars, err := h.Service.GetCalendars(userID, "public")
+	groups, err := h.Service.GetGroups(userID)
 	if err != nil {
 		handlers.RespondWithError(w, r, err, http.StatusInternalServerError)
 		return
 	}
 
-	calendarIds := make([]uuid.UUID, 0)
-	for _, calendar := range calendars {
-		calendarIds = append(calendarIds, calendar.ID)
+	groupIDs := make([]uuid.UUID, 0)
+	for _, calendar := range groups {
+		groupIDs = append(groupIDs, calendar.ID)
 	}
 
-	dates, err := h.Service.GetDates(calendarIds)
+	dates, err := h.Service.GetDates(groupIDs)
 	if err != nil {
 		handlers.RespondWithError(w, r, err, http.StatusInternalServerError)
 		return
@@ -68,57 +68,57 @@ func (h *Handlers) GetPublicCalendars(w http.ResponseWriter, r *http.Request) {
 
 	dateMap := make(map[uuid.UUID][]DateDTO)
 	for _, date := range dates {
-		if _, exists := dateMap[date.CalendarId]; !exists {
-			dateMap[date.CalendarId] = make([]DateDTO, 0)
+		if _, exists := dateMap[date.GroupID]; !exists {
+			dateMap[date.GroupID] = make([]DateDTO, 0)
 		}
 
-		dateSlice := dateMap[date.CalendarId]
+		dateSlice := dateMap[date.GroupID]
 		dateSlice = append(dateSlice, DateDTO{
 			ID:   date.ID,
 			From: date.FromDate,
 			To:   date.ToDate,
 		})
-		dateMap[date.CalendarId] = dateSlice
+		dateMap[date.GroupID] = dateSlice
 	}
 
-	calendarDTOs := make([]CalendarDTO, 0)
-	for _, cal := range calendars {
+	groupDTOs := make([]GroupDTO, 0)
+	for _, cal := range groups {
 		dateDtos := dateMap[cal.ID]
 
-		calDto := CalendarDTO{
-			ID:         cal.ID,
-			Name:       cal.Name,
-			Visibility: string(cal.Visibility),
-			Dates:      dateDtos,
+		calDto := GroupDTO{
+			ID:          cal.ID,
+			Name:        cal.Name,
+			Description: cal.Description,
+			Dates:       dateDtos,
 		}
 
-		calendarDTOs = append(calendarDTOs, calDto)
+		groupDTOs = append(groupDTOs, calDto)
 	}
 
-	res := GetPublicCalendarsRes{
-		Calendars: calendarDTOs,
+	res := GetGroupsRes{
+		Groups: groupDTOs,
 	}
 
 	handlers.RespondWithData(w, r, res)
 }
 
-func (h *Handlers) AddDatesToCalendar(w http.ResponseWriter, r *http.Request) {
+func (h *Handlers) AddDatesToGroup(w http.ResponseWriter, r *http.Request) {
 	userID, ok := r.Context().Value(handlers.UserIdContextKey).(uuid.UUID)
 	if !ok {
 		handlers.RespondWithError(w, r, ErrContextInvalid, http.StatusInternalServerError)
 		return
 	}
-	var req AddDatesToCalendarReq
+	var req AddDatesToGroupReq
 	if err := handlers.FromRequest(r, &req); err != nil {
 		handlers.RespondWithError(w, r, err, http.StatusBadRequest)
 		return
 	}
 
-	dates := calendar.Dates{
+	dates := group.Dates{
 		From: req.Dates.From,
 		To:   req.Dates.To,
 	}
-	msg, err := h.Service.AddDatesToCalendar(userID, req.CalendarID, dates)
+	msg, err := h.Service.AddDatesToGroup(userID, req.GroupID, dates)
 	if err != nil {
 		handlers.RespondWithError(w, r, err, http.StatusInternalServerError)
 		return

@@ -5,9 +5,9 @@ import (
 
 	"github.com/akxcix/nomadcore/pkg/handlers"
 	authHandlers "github.com/akxcix/nomadcore/pkg/handlers/auth"
-	calHandlers "github.com/akxcix/nomadcore/pkg/handlers/calendar"
+	groupHandlers "github.com/akxcix/nomadcore/pkg/handlers/group"
 	"github.com/akxcix/nomadcore/pkg/services/auth"
-	"github.com/akxcix/nomadcore/pkg/services/calendar"
+	"github.com/akxcix/nomadcore/pkg/services/group"
 	"github.com/rs/zerolog/log"
 
 	"github.com/go-chi/chi/v5"
@@ -17,11 +17,11 @@ import (
 	"github.com/ulule/limiter/v3/drivers/store/memory"
 )
 
-func createRoutes(authService *auth.Service, calService *calendar.Service) *chi.Mux {
+func createRoutes(authService *auth.Service, groupService *group.Service) *chi.Mux {
 	rateLimiter := NewRateLimiter()
 	limiterMiddleware := rateLimiter.rateLimitMiddleware()
-	calHandlers := calHandlers.New(calService)
-	authHandlers := authHandlers.New(authService)
+	group := groupHandlers.New(groupService)
+	auth := authHandlers.New(authService)
 	corsHandler := getCorsHandler()
 	r := chi.NewRouter()
 
@@ -34,9 +34,9 @@ func createRoutes(authService *auth.Service, calService *calendar.Service) *chi.
 	r.Get("/health", handlers.HealthCheck)
 
 	// service routes
-	r.Post("/calendars/new", authHandlers.AuthMiddleware(calHandlers.CreateCalendar))
-	r.Post("/calendars/dates/new", authHandlers.AuthMiddleware(calHandlers.AddDatesToCalendar))
-	r.Get("/calendars/public", authHandlers.AuthMiddleware(calHandlers.GetPublicCalendars))
+	r.Post("/groups/new", auth.AuthMiddleware(group.CreateGroup))
+	r.Post("/groups/dates/new", auth.AuthMiddleware(group.AddDatesToGroup))
+	r.Get("/groups", auth.AuthMiddleware(group.GetGroups))
 
 	return r
 }

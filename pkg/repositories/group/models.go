@@ -1,4 +1,4 @@
-package calendar
+package group
 
 import (
 	"time"
@@ -20,16 +20,16 @@ type BaseTable struct {
 	UpdatedAt time.Time `db:"updated_at"`
 }
 
-type Calendar struct {
+type Group struct {
 	BaseTable
-	UserId     string     `db:"user_id"`
-	Name       string     `db:"name"`
-	Visibility Visibility `db:"visibility"`
+	UserId      string  `db:"user_id"`
+	Name        string  `db:"name"`
+	Description *string `db:"description"`
 }
 
 type Date struct {
 	BaseTable
-	FromDate   time.Time `db:"from_date"`
-	ToDate     time.Time `db:"to_date"`
-	CalendarId uuid.UUID `db:"calendar_id"`
+	FromDate time.Time `db:"from_date"`
+	ToDate   time.Time `db:"to_date"`
+	GroupID  uuid.UUID `db:"group_id"`
 }

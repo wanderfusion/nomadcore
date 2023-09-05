@@ -1,4 +1,4 @@
-package calendar
+package group
 
 import "time"
 

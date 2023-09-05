@@ -6,7 +6,7 @@ import (
 
 	"github.com/akxcix/nomadcore/pkg/config"
 	"github.com/akxcix/nomadcore/pkg/services/auth"
-	"github.com/akxcix/nomadcore/pkg/services/calendar"
+	"github.com/akxcix/nomadcore/pkg/services/group"
 	"github.com/go-chi/chi/v5"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -27,22 +27,22 @@ func readConfigs() *config.Config {
 	return config
 }
 
-func createServices(conf *config.Config) (*auth.Service, *calendar.Service) {
+func createServices(conf *config.Config) (*auth.Service, *group.Service) {
 	if conf == nil {
 		log.Fatal().Msg("Conf is nil")
 	}
 
 	authService := auth.New(conf.Jwt)
-	calService := calendar.New(conf.Database)
+	groupService := group.New(conf.Database)
 
-	return authService, calService
+	return authService, groupService
 }
 
 func new() *application {
 	config := readConfigs()
 
-	authService, calService := createServices(config)
-	routes := createRoutes(authService, calService)
+	authService, groupService := createServices(config)
+	routes := createRoutes(authService, groupService)
 
 	app := application{
 		host:   config.Server.Host,
