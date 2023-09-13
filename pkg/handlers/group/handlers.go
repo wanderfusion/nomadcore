@@ -5,6 +5,7 @@ import (
 
 	"github.com/akxcix/nomadcore/pkg/handlers"
 	"github.com/akxcix/nomadcore/pkg/services/group"
+	"github.com/go-chi/chi/v5"
 
 	"github.com/google/uuid"
 )
@@ -21,21 +22,30 @@ func New(s *group.Service) *Handlers {
 	return &h
 }
 
-func (h *Handlers) CreateGroup(w http.ResponseWriter, r *http.Request) {
+func getUserIDFromContext(r *http.Request) (uuid.UUID, bool) {
 	userID, ok := r.Context().Value(handlers.UserIdContextKey).(uuid.UUID)
+	return userID, ok
+}
+
+func handleError(w http.ResponseWriter, r *http.Request, err error, status int) {
+	handlers.RespondWithError(w, r, err, status)
+}
+
+func (h *Handlers) CreateGroup(w http.ResponseWriter, r *http.Request) {
+	userID, ok := getUserIDFromContext(r)
 	if !ok {
-		handlers.RespondWithError(w, r, ErrContextInvalid, http.StatusInternalServerError)
+		handleError(w, r, ErrContextInvalid, http.StatusInternalServerError)
 		return
 	}
 	var req CreateGroupReq
 	if err := handlers.FromRequest(r, &req); err != nil {
-		handlers.RespondWithError(w, r, err, http.StatusBadRequest)
+		handleError(w, r, ErrContextInvalid, http.StatusInternalServerError)
 		return
 	}
 
 	msg, err := h.Service.CreateGroup(userID, req.Name, req.Description)
 	if err != nil {
-		handlers.RespondWithError(w, r, err, http.StatusInternalServerError)
+		handleError(w, r, ErrContextInvalid, http.StatusInternalServerError)
 		return
 	}
 
@@ -43,15 +53,15 @@ func (h *Handlers) CreateGroup(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handlers) GetGroups(w http.ResponseWriter, r *http.Request) {
-	userID, ok := r.Context().Value(handlers.UserIdContextKey).(uuid.UUID)
+	userID, ok := getUserIDFromContext(r)
 	if !ok {
-		handlers.RespondWithError(w, r, ErrContextInvalid, http.StatusInternalServerError)
+		handleError(w, r, ErrContextInvalid, http.StatusInternalServerError)
 		return
 	}
 
 	groups, err := h.Service.GetGroups(userID)
 	if err != nil {
-		handlers.RespondWithError(w, r, err, http.StatusInternalServerError)
+		handleError(w, r, ErrContextInvalid, http.StatusInternalServerError)
 		return
 	}
 
@@ -62,7 +72,7 @@ func (h *Handlers) GetGroups(w http.ResponseWriter, r *http.Request) {
 
 	dates, err := h.Service.GetDates(groupIDs)
 	if err != nil {
-		handlers.RespondWithError(w, r, err, http.StatusInternalServerError)
+		handleError(w, r, ErrContextInvalid, http.StatusInternalServerError)
 		return
 	}
 
@@ -103,14 +113,14 @@ func (h *Handlers) GetGroups(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handlers) AddDatesToGroup(w http.ResponseWriter, r *http.Request) {
-	userID, ok := r.Context().Value(handlers.UserIdContextKey).(uuid.UUID)
+	userID, ok := getUserIDFromContext(r)
 	if !ok {
-		handlers.RespondWithError(w, r, ErrContextInvalid, http.StatusInternalServerError)
+		handleError(w, r, ErrContextInvalid, http.StatusInternalServerError)
 		return
 	}
 	var req AddDatesToGroupReq
 	if err := handlers.FromRequest(r, &req); err != nil {
-		handlers.RespondWithError(w, r, err, http.StatusBadRequest)
+		handleError(w, r, ErrContextInvalid, http.StatusInternalServerError)
 		return
 	}
 
@@ -120,9 +130,87 @@ func (h *Handlers) AddDatesToGroup(w http.ResponseWriter, r *http.Request) {
 	}
 	msg, err := h.Service.AddDatesToGroup(userID, req.GroupID, dates)
 	if err != nil {
-		handlers.RespondWithError(w, r, err, http.StatusInternalServerError)
+		handleError(w, r, ErrContextInvalid, http.StatusInternalServerError)
 		return
 	}
 
 	handlers.RespondWithData(w, r, msg)
+}
+
+func (h *Handlers) AddUsersToGroup(w http.ResponseWriter, r *http.Request) {
+	// todo: check if user is in group
+	// userID, ok := getUserIDFromContext(r)
+	// if !ok {
+	// 	handleError(w, r, ErrContextInvalid, http.StatusInternalServerError)
+	// 	return
+	// }
+	var req AddUsersToGroupReq
+	if err := handlers.FromRequest(r, &req); err != nil {
+		handleError(w, r, ErrContextInvalid, http.StatusInternalServerError)
+		return
+	}
+
+	msg, err := h.Service.AddUsersToGroup(req.UserIDs, req.GroupID)
+	if err != nil {
+		handleError(w, r, ErrContextInvalid, http.StatusInternalServerError)
+		return
+	}
+
+	handlers.RespondWithData(w, r, msg)
+}
+
+func (h *Handlers) GetGroupDetails(w http.ResponseWriter, r *http.Request) {
+	// Extract Group ID from URL using Chi router
+	groupIDStr := chi.URLParam(r, "groupID")
+	groupID, err := uuid.Parse(groupIDStr)
+	if err != nil {
+		handleError(w, r, ErrContextInvalid, http.StatusBadRequest)
+		return
+	}
+
+	userID, ok := getUserIDFromContext(r)
+	if !ok {
+		handleError(w, r, ErrContextInvalid, http.StatusInternalServerError)
+		return
+	}
+
+	groupDetails, groupDates, groupUsers, svcErr := h.Service.GetGroupDetails(userID, groupID)
+	if svcErr != nil {
+		handleError(w, r, ErrContextInvalid, http.StatusInternalServerError)
+		return
+	}
+
+	// Convert to DTOs
+	groupDTO := GroupDTO{
+		ID:          groupDetails.ID,
+		Name:        groupDetails.Name,
+		Description: groupDetails.Description,
+	}
+
+	var dateDTOs []DateDTO
+	for _, date := range groupDates {
+		dateDTO := DateDTO{
+			ID:   date.ID,
+			From: date.FromDate,
+			To:   date.ToDate,
+		}
+		dateDTOs = append(dateDTOs, dateDTO)
+	}
+
+	var userDTOs []UserDTO
+	for _, user := range groupUsers {
+		userDTO := UserDTO{
+			ID: user.UserID,
+		}
+		userDTOs = append(userDTOs, userDTO)
+	}
+
+	// Prepare response
+	response := GetGroupDetailsRes{
+		Group:     groupDTO,
+		GroupDate: dateDTOs,
+		GroupUser: userDTOs,
+	}
+
+	handlers.RespondWithData(w, r, response)
 }

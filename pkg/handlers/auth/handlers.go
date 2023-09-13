@@ -2,11 +2,13 @@ package auth
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"strings"
 
 	"github.com/akxcix/nomadcore/pkg/handlers"
 	"github.com/akxcix/nomadcore/pkg/services/auth"
+	"github.com/google/uuid"
 )
 
 type Handlers struct {
@@ -21,33 +23,39 @@ func New(s *auth.Service) *Handlers {
 	return &h
 }
 
-func (h *Handlers) AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		bearerToken := r.Header.Get("Authorization")
-
-		// Check if token exists
-		if bearerToken == "" {
+func (h *Handlers) AuthMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		token, err := extractToken(r)
+		if err != nil {
 			handlers.RespondWithError(w, r, ErrInvalidJwt, http.StatusUnauthorized)
 			return
 		}
 
-		// Extract token from header
-		tokenParts := strings.Split(bearerToken, " ")
-		if len(tokenParts) != 2 {
-			handlers.RespondWithError(w, r, ErrInvalidJwt, http.StatusUnauthorized)
-			return
-		}
-		tokenString := tokenParts[1]
-
-		// Validate token
-		claims, isValid := h.Service.ValidateJwt(tokenString)
-		if claims == nil || !isValid {
+		claims, isValid := h.Service.ValidateJwt(token)
+		if !isValid {
 			handlers.RespondWithError(w, r, ErrInvalidJwt, http.StatusUnauthorized)
 			return
 		}
 
-		// if token is valid then all subsequent routes have access to the userID for further use
-		ctx := context.WithValue(r.Context(), handlers.UserIdContextKey, claims.ID)
+		ctx := enrichContextWithUserID(r.Context(), claims.ID)
 		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+func extractToken(r *http.Request) (string, error) {
+	bearerToken := r.Header.Get("Authorization")
+	if bearerToken == "" {
+		return "", errors.New("missing token")
 	}
+
+	tokenParts := strings.Split(bearerToken, " ")
+	if len(tokenParts) != 2 {
+		return "", errors.New("invalid token format")
+	}
+
+	return tokenParts[1], nil
+}
+
+func enrichContextWithUserID(ctx context.Context, userID uuid.UUID) context.Context {
+	return context.WithValue(ctx, handlers.UserIdContextKey, userID)
 }

@@ -18,27 +18,46 @@ import (
 )
 
 func createRoutes(authService *auth.Service, groupService *group.Service) *chi.Mux {
-	rateLimiter := NewRateLimiter()
-	limiterMiddleware := rateLimiter.rateLimitMiddleware()
-	group := groupHandlers.New(groupService)
-	auth := authHandlers.New(authService)
-	corsHandler := getCorsHandler()
 	r := chi.NewRouter()
 
-	// global middlewares
-	r.Use(corsHandler)
-	r.Use(limiterMiddleware)
-	r.Use(handlers.LogRequest)
+	// Apply global middlewares
+	applyGlobalMiddlewares(r)
 
-	// general routes
-	r.Get("/health", handlers.HealthCheck)
+	// Initialize handlers
+	groupHandler := groupHandlers.New(groupService)
+	authHandler := authHandlers.New(authService)
 
-	// service routes
-	r.Post("/groups/new", auth.AuthMiddleware(group.CreateGroup))
-	r.Post("/groups/dates/new", auth.AuthMiddleware(group.AddDatesToGroup))
-	r.Get("/groups", auth.AuthMiddleware(group.GetGroups))
+	// Define routes
+	defineRoutes(r, authHandler, groupHandler)
 
 	return r
+}
+
+func applyGlobalMiddlewares(r *chi.Mux) {
+	r.Use(getCorsHandler())
+	r.Use(newRateLimiter().rateLimitMiddleware())
+	r.Use(handlers.LogRequest)
+}
+
+func defineRoutes(r *chi.Mux, auth *authHandlers.Handlers, group *groupHandlers.Handlers) {
+	// Health Check Route
+	r.Get("/health", handlers.HealthCheck)
+
+	// Group Routes
+	r.Route("/groups", func(r chi.Router) {
+		r.Use(auth.AuthMiddleware)
+		r.Get("/me", group.GetGroups)
+		r.Get("/{groupID}", group.GetGroupDetails) // Get group by ID
+		r.Post("/new", group.CreateGroup)
+		r.Post("/dates/new", group.AddDatesToGroup)
+		r.Post("/users/new", group.AddUsersToGroup) // Add users to group
+	})
+
+	// // User Routes
+	// r.Route("/users", func(r chi.Router) {
+	// 	r.Use(auth.AuthMiddleware)
+	// 	r.Get("/{username}/profile", auth.GetUserProfileByID) // Get user profile by ID
+	// })
 }
 
 // cors -------------------------------------------------------------------------------------------
@@ -59,7 +78,7 @@ type RateLimiter struct {
 	rate  limiter.Rate
 }
 
-func NewRateLimiter() *RateLimiter {
+func newRateLimiter() *RateLimiter {
 	rate, err := limiter.NewRateFromFormatted("500-M")
 	if err != nil {
 		log.Fatal().Err(err).Msg("unable to initialise limiter")

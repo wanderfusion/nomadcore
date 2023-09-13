@@ -27,9 +27,15 @@ type Group struct {
 	Description *string `db:"description"`
 }
 
-type Date struct {
+type GroupDate struct {
 	BaseTable
 	FromDate time.Time `db:"from_date"`
 	ToDate   time.Time `db:"to_date"`
 	GroupID  uuid.UUID `db:"group_id"`
+}
+
+type GroupUser struct {
+	BaseTable
+	GroupID uuid.UUID `db:"group_id"`
+	UserID  uuid.UUID `db:"user_id"`
 }

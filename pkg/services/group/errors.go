@@ -13,4 +13,5 @@ var (
 
 	// 4xx ----------------------------------------------------------------------------------------
 	ErrInvalidRequest services.ServiceError = errors.New("the request is invalid")
+	ErrUserForbidden  services.ServiceError = errors.New("the user is forbidden to access this resource")
 )

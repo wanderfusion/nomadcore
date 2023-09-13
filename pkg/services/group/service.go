@@ -34,6 +34,11 @@ func (s *Service) CreateGroup(userId uuid.UUID, name, description string) (strin
 		return "", ErrFailedDBWrite
 	}
 
+	if err != nil {
+		log.Error().Err(err).Msg("unable to add user to DB")
+		return "", ErrFailedDBWrite
+	}
+
 	msg := "Successfully added calendar"
 	return msg, nil
 }
@@ -48,7 +53,31 @@ func (s *Service) GetGroups(userID uuid.UUID) ([]group.Group, services.ServiceEr
 	return groups, nil
 }
 
-func (s *Service) GetDates(calendarIDs []uuid.UUID) ([]group.Date, services.ServiceError) {
+func (s *Service) GetGroupDetails(userID, groupId uuid.UUID) (*group.Group, []group.GroupDate, []group.GroupUser, services.ServiceError) {
+	groupDetails, groupDates, groupUsers, err := s.groupRepo.GetGroupWithDetails(groupId)
+	groupUsers = append(groupUsers, group.GroupUser{UserID: userID})
+	if err != nil {
+		log.Error().Err(err).Msg("Unable to get group details from DB")
+		return nil, nil, nil, ErrFailedDBRead
+	}
+
+	userAuthorised := false
+	for _, user := range groupUsers {
+		if user.UserID == userID {
+			userAuthorised = true
+			break
+		}
+	}
+
+	if !userAuthorised {
+		log.Error().Msg("User not authorised to view group")
+		return nil, nil, nil, ErrUserForbidden
+	}
+
+	return groupDetails, groupDates, groupUsers, nil
+}
+
+func (s *Service) GetDates(calendarIDs []uuid.UUID) ([]group.GroupDate, services.ServiceError) {
 	dates, err := s.groupRepo.GetDates(calendarIDs)
 	if err != nil {
 		log.Error().Err(err).Msg("unable to get dates from DB")
@@ -64,6 +93,15 @@ func (s *Service) AddDatesToGroup(userID, groupID uuid.UUID, dates Dates) (strin
 		return "", ErrInvalidRequest
 	}
 	err := s.groupRepo.AddDatesToGroup(userID, groupID, dates.From, dates.To)
+	if err != nil {
+		log.Error().Err(err).Msg("unable to add dates to DB")
+		return "", ErrFailedDBWrite
+	}
+	return "successfully added", nil
+}
+
+func (s *Service) AddUsersToGroup(userIDs []uuid.UUID, groupID uuid.UUID) (string, services.ServiceError) {
+	err := s.groupRepo.AddUsersToGroup(userIDs, groupID)
 	if err != nil {
 		log.Error().Err(err).Msg("unable to add dates to DB")
 		return "", ErrFailedDBWrite

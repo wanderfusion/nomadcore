@@ -5,6 +5,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
+	"github.com/lib/pq"
 )
 
 func (db *Database) CreateGroup(userId uuid.UUID, name, description string) error {
@@ -44,13 +45,63 @@ func (db *Database) GetGroups(userID uuid.UUID) ([]Group, error) {
 	return groups, nil
 }
 
-func (db *Database) GetDates(calendarIDs []uuid.UUID) ([]Date, error) {
-	dates := []Date{}
+func (db *Database) GetGroupWithDetails(groupId uuid.UUID) (*Group, []GroupDate, []GroupUser, error) {
+	var group Group
+	var groupDates []GroupDate
+	var groupUsers []GroupUser
+
+	// Query for group details
+	groupQuery := `
+		SELECT 
+			* 
+		FROM 
+			public.groups 
+		WHERE 
+			id = $1
+	`
+	err := db.db.Get(&group, groupQuery, groupId)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	// Query for group dates
+	dateQuery := `
+		SELECT 
+			* 
+		FROM 
+			public.group_dates 
+		WHERE 
+			group_id = $1
+	`
+	err = db.db.Select(&groupDates, dateQuery, groupId)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	// Query for group users
+	userQuery := `
+		SELECT 
+			* 
+		FROM 
+			public.group_users 
+		WHERE 
+			group_id = $1
+	`
+	err = db.db.Select(&groupUsers, userQuery, groupId)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	return &group, groupDates, groupUsers, nil
+}
+
+func (db *Database) GetDates(calendarIDs []uuid.UUID) ([]GroupDate, error) {
+	dates := []GroupDate{}
 	query := `
 		SELECT 
 			*
 		FROM
-			public.dates
+			public.group_dates
 		WHERE
 			group_id in (?)
 		LIMIT
@@ -75,7 +126,7 @@ func (db *Database) GetDates(calendarIDs []uuid.UUID) ([]Date, error) {
 func (db *Database) AddDatesToGroup(userID, groupID uuid.UUID, from, to time.Time) error {
 	query := `
 	INSERT INTO 
-		dates (from_date, to_date, group_id)
+		group_dates (from_date, to_date, group_id)
 	SELECT 
 		$1, $2, $3
 	WHERE 
@@ -95,5 +146,27 @@ func (db *Database) AddDatesToGroup(userID, groupID uuid.UUID, from, to time.Tim
 	if err != nil {
 		return err
 	}
+	return tx.Commit()
+}
+
+func (db *Database) AddUsersToGroup(userIDs []uuid.UUID, groupID uuid.UUID) error {
+	query := `
+		INSERT INTO 
+			group_users (user_id, group_id)
+		VALUES
+			(UNNEST($1::uuid[]), $2);
+	`
+
+	tx, err := db.db.Begin()
+	if err != nil {
+		return err
+	}
+
+	_, err = tx.Exec(query, pq.Array(userIDs), groupID)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
 	return tx.Commit()
 }
