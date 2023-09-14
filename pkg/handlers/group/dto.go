@@ -18,8 +18,8 @@ type AddDatesToGroupReq struct {
 }
 
 type AddUsersToGroupReq struct {
-	GroupID uuid.UUID   `json:"groupID"`
-	UserIDs []uuid.UUID `json:"userIDs"`
+	GroupID   uuid.UUID `json:"groupID"`
+	Usernames []string  `json:"usernames"`
 }
 
 // Res --------------------------------------------------------------------------------------------
@@ -37,6 +37,7 @@ type GetGroupDetailsRes struct {
 // DTOs -------------------------------------------------------------------------------------------
 type GroupDTO struct {
 	ID          uuid.UUID `json:"id"`
+	CreatedAt   time.Time `json:"createdAt"`
 	Name        string    `json:"name"`
 	Description *string   `json:"description"`
 	Dates       []DateDTO `json:"dates"`

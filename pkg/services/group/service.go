@@ -1,39 +1,46 @@
 package group
 
 import (
+	"errors"
+
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 
+	"github.com/akxcix/nomadcore/pkg/clients/passport"
 	"github.com/akxcix/nomadcore/pkg/config"
 	"github.com/akxcix/nomadcore/pkg/repositories/group"
 	"github.com/akxcix/nomadcore/pkg/services"
 )
 
 type Service struct {
-	groupRepo *group.Database
+	groupRepo      *group.Database
+	passportClient *passport.Client
 }
 
-func New(dbConf *config.DatabaseConfig) *Service {
+func New(dbConf *config.DatabaseConfig, passportClientConf *config.PassportClient) *Service {
 	if dbConf == nil {
 		log.Fatal().Msg("dbConf is nil")
 	}
 
 	groupRepo := group.New(dbConf)
+	passportClient := passport.NewClient(passportClientConf.Host)
 
 	svc := &Service{
-		groupRepo: groupRepo,
+		groupRepo:      groupRepo,
+		passportClient: passportClient,
 	}
 
 	return svc
 }
 
 func (s *Service) CreateGroup(userId uuid.UUID, name, description string) (string, services.ServiceError) {
-	err := s.groupRepo.CreateGroup(userId, name, description)
+	groupID, err := s.groupRepo.CreateGroup(userId, name, description)
 	if err != nil {
 		log.Error().Err(err).Msg("unable to add calendar to DB")
 		return "", ErrFailedDBWrite
 	}
 
+	err = s.groupRepo.AddUsersToGroup([]uuid.UUID{userId}, groupID)
 	if err != nil {
 		log.Error().Err(err).Msg("unable to add user to DB")
 		return "", ErrFailedDBWrite
@@ -100,11 +107,42 @@ func (s *Service) AddDatesToGroup(userID, groupID uuid.UUID, dates Dates) (strin
 	return "successfully added", nil
 }
 
-func (s *Service) AddUsersToGroup(userIDs []uuid.UUID, groupID uuid.UUID) (string, services.ServiceError) {
-	err := s.groupRepo.AddUsersToGroup(userIDs, groupID)
+func (s *Service) AddUsersToGroup(usernames []string, groupID uuid.UUID) (string, services.ServiceError) {
+	if usernames == nil {
+		log.Info().Msg("invalid usernames")
+		return "", ErrInvalidRequest
+	}
+	usernameMap, err := s.getUserIDsFromUsernames(usernames)
+	if err != nil {
+		log.Error().Err(err).Msg("unable to get user IDs from passport")
+		return "", ErrFailedClientCall
+	}
+	userIDs := make([]uuid.UUID, 0)
+	for _, userID := range usernameMap {
+		userIDs = append(userIDs, userID)
+	}
+	err = s.groupRepo.AddUsersToGroup(userIDs, groupID)
 	if err != nil {
 		log.Error().Err(err).Msg("unable to add dates to DB")
 		return "", ErrFailedDBWrite
 	}
 	return "successfully added", nil
+}
+
+func (s *Service) getUserIDsFromUsernames(usernames []string) (map[string]uuid.UUID, error) {
+	userIDs := make(map[string]uuid.UUID)
+	res, err := s.passportClient.GetUsersFromUsernames(usernames)
+	if err != nil {
+		log.Error().Err(err).Msg("unable to get users from passport")
+		return nil, errors.New("unable to get users from passport")
+	}
+	if len(res.Data) == 0 {
+		log.Error().Msg("no users found")
+		return nil, errors.New("no users found")
+	}
+	for _, user := range res.Data {
+		userIDs[user.Username] = user.ID
+	}
+
+	return userIDs, nil
 }

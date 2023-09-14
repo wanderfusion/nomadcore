@@ -33,9 +33,10 @@ func Read(path string) (*Config, error) {
 
 // models
 type Config struct {
-	Server   *ServerConfig   `yaml:"server"`
-	Database *DatabaseConfig `yaml:"database"`
-	Jwt      *Jwt            `yaml:"jwt"`
+	Server         *ServerConfig   `yaml:"server"`
+	Database       *DatabaseConfig `yaml:"database"`
+	Jwt            *Jwt            `yaml:"jwt"`
+	PassportClient PassportClient  `yaml:"passport-client"`
 }
 
 type ServerConfig struct {
@@ -54,4 +55,8 @@ type DatabaseConfig struct {
 type Jwt struct {
 	Secret    string `yaml:"secret"`
 	ValidMins int    `yaml:"valid-mins"`
+}
+
+type PassportClient struct {
+	Host string `yaml:"host"`
 }

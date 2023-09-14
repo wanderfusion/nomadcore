@@ -150,7 +150,7 @@ func (h *Handlers) AddUsersToGroup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	msg, err := h.Service.AddUsersToGroup(req.UserIDs, req.GroupID)
+	msg, err := h.Service.AddUsersToGroup(req.Usernames, req.GroupID)
 	if err != nil {
 		handleError(w, r, ErrContextInvalid, http.StatusInternalServerError)
 		return
@@ -183,6 +183,7 @@ func (h *Handlers) GetGroupDetails(w http.ResponseWriter, r *http.Request) {
 	// Convert to DTOs
 	groupDTO := GroupDTO{
 		ID:          groupDetails.ID,
+		CreatedAt:   groupDetails.CreatedAt,
 		Name:        groupDetails.Name,
 		Description: groupDetails.Description,
 	}

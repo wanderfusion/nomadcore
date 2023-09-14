@@ -8,35 +8,33 @@ import (
 	"github.com/lib/pq"
 )
 
-func (db *Database) CreateGroup(userId uuid.UUID, name, description string) error {
+func (db *Database) CreateGroup(userID uuid.UUID, name, description string) (uuid.UUID, error) {
 	query := `
-		INSERT 
-			INTO 
-				public.groups (user_id, name, description) 
-			VALUES 
-				($1, $2, $3)
+		INSERT INTO public.groups (user_id, name, description) 
+		VALUES ($1, $2, $3)
+		RETURNING id
 	`
-
-	tx := db.db.MustBegin()
-	_, err := tx.Exec(query, userId, name, description)
+	var newGroupID uuid.UUID
+	err := db.db.QueryRow(query, userID, name, description).Scan(&newGroupID)
 	if err != nil {
-		return err
+		return uuid.Nil, err
 	}
-	return tx.Commit()
+	return newGroupID, nil
 }
 
 func (db *Database) GetGroups(userID uuid.UUID) ([]Group, error) {
 	groups := []Group{}
 	query := `
 		SELECT 
-			* 
+			g.* 
 		FROM 
-			public.groups 
+			public.groups g
+		JOIN
+			public.group_users gu ON g.id = gu.group_id
 		WHERE 
-			user_id = $1 
+			gu.user_id = $1 
 	`
 
-	// QueryRow still works, but now we're scanning into multiple variables
 	err := db.db.Select(&groups, query, userID)
 	if err != nil {
 		return nil, err

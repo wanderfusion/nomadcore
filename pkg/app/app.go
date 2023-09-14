@@ -33,7 +33,7 @@ func createServices(conf *config.Config) (*auth.Service, *group.Service) {
 	}
 
 	authService := auth.New(conf.Jwt)
-	groupService := group.New(conf.Database)
+	groupService := group.New(conf.Database, &conf.PassportClient)
 
 	return authService, groupService
 }
