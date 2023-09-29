@@ -147,6 +147,25 @@ func (db *Database) AddDatesToGroup(userID, groupID uuid.UUID, from, to time.Tim
 	return tx.Commit()
 }
 
+func (db *Database) GetUserProfileByID(userID uuid.UUID) (UserProfile, error) {
+	query := `
+		SELECT
+		*
+		FROM 
+		user_profiles
+		WHERE
+		user_id = $1	
+	`
+
+	userProfile := UserProfile{}
+	err := db.db.Get(&userProfile, query, userID)
+	if err != nil {
+		return userProfile, err
+	}
+
+	return userProfile, nil
+}
+
 func (db *Database) AddUsersToGroup(userIDs []uuid.UUID, groupID uuid.UUID) error {
 	query := `
 		INSERT INTO 

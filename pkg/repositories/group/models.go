@@ -34,6 +34,14 @@ type GroupDate struct {
 	GroupID  uuid.UUID `db:"group_id"`
 }
 
+type UserProfile struct {
+	BaseTable
+	UserID    uuid.UUID `db:"user_id"`
+	Bio       string    `db:"bio"`
+	Interests string    `db:"interests"`
+	Metadata  string    `db:"metadata"`
+}
+
 type GroupUser struct {
 	BaseTable
 	GroupID uuid.UUID `db:"group_id"`

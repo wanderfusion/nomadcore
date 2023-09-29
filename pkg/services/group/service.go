@@ -146,3 +146,12 @@ func (s *Service) getUserIDsFromUsernames(usernames []string) (map[string]uuid.U
 
 	return userIDs, nil
 }
+
+func (s *Service) GetUserProfileByID(userID uuid.UUID) (group.UserProfile, error) {
+	userProfile, err := s.groupRepo.GetUserProfileByID(userID)
+	if err != nil {
+		return userProfile, err
+	}
+
+	return userProfile, nil
+}

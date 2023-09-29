@@ -27,13 +27,13 @@ func (h *Handlers) AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		token, err := extractToken(r)
 		if err != nil {
-			handlers.RespondWithError(w, r, ErrInvalidJwt, http.StatusUnauthorized)
+			handlers.RespondWithError(w, r, ErrInvalidAuthToken.Wrap(err))
 			return
 		}
 
 		claims, isValid := h.Service.ValidateJwt(token)
 		if !isValid {
-			handlers.RespondWithError(w, r, ErrInvalidJwt, http.StatusUnauthorized)
+			handlers.RespondWithError(w, r, ErrInvalidAuthToken.Wrap(err))
 			return
 		}
 

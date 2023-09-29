@@ -3,6 +3,7 @@ package group
 import (
 	"net/http"
 
+	"github.com/akxcix/nomadcore/pkg/errors"
 	"github.com/akxcix/nomadcore/pkg/handlers"
 	"github.com/akxcix/nomadcore/pkg/services/group"
 	"github.com/go-chi/chi/v5"
@@ -27,25 +28,25 @@ func getUserIDFromContext(r *http.Request) (uuid.UUID, bool) {
 	return userID, ok
 }
 
-func handleError(w http.ResponseWriter, r *http.Request, err error, status int) {
-	handlers.RespondWithError(w, r, err, status)
+func handleError(w http.ResponseWriter, r *http.Request, err errors.Error) {
+	handlers.RespondWithError(w, r, err)
 }
 
 func (h *Handlers) CreateGroup(w http.ResponseWriter, r *http.Request) {
 	userID, ok := getUserIDFromContext(r)
 	if !ok {
-		handleError(w, r, ErrContextInvalid, http.StatusInternalServerError)
+		handleError(w, r, ErrInternalServerError)
 		return
 	}
 	var req CreateGroupReq
 	if err := handlers.FromRequest(r, &req); err != nil {
-		handleError(w, r, ErrContextInvalid, http.StatusInternalServerError)
+		handleError(w, r, ErrBadRequest.Wrap(err))
 		return
 	}
 
 	msg, err := h.Service.CreateGroup(userID, req.Name, req.Description)
 	if err != nil {
-		handleError(w, r, ErrContextInvalid, http.StatusInternalServerError)
+		handleError(w, r, ErrInternalServerError.Wrap(err))
 		return
 	}
 
@@ -55,13 +56,13 @@ func (h *Handlers) CreateGroup(w http.ResponseWriter, r *http.Request) {
 func (h *Handlers) GetGroups(w http.ResponseWriter, r *http.Request) {
 	userID, ok := getUserIDFromContext(r)
 	if !ok {
-		handleError(w, r, ErrContextInvalid, http.StatusInternalServerError)
+		handleError(w, r, ErrInvalidContext)
 		return
 	}
 
 	groups, err := h.Service.GetGroups(userID)
 	if err != nil {
-		handleError(w, r, ErrContextInvalid, http.StatusInternalServerError)
+		handleError(w, r, ErrInternalServerError.Wrap(err))
 		return
 	}
 
@@ -72,7 +73,7 @@ func (h *Handlers) GetGroups(w http.ResponseWriter, r *http.Request) {
 
 	dates, err := h.Service.GetDates(groupIDs)
 	if err != nil {
-		handleError(w, r, ErrContextInvalid, http.StatusInternalServerError)
+		handleError(w, r, ErrInternalServerError.Wrap(err))
 		return
 	}
 
@@ -115,12 +116,12 @@ func (h *Handlers) GetGroups(w http.ResponseWriter, r *http.Request) {
 func (h *Handlers) AddDatesToGroup(w http.ResponseWriter, r *http.Request) {
 	userID, ok := getUserIDFromContext(r)
 	if !ok {
-		handleError(w, r, ErrContextInvalid, http.StatusInternalServerError)
+		handleError(w, r, ErrInvalidContext)
 		return
 	}
 	var req AddDatesToGroupReq
 	if err := handlers.FromRequest(r, &req); err != nil {
-		handleError(w, r, ErrContextInvalid, http.StatusInternalServerError)
+		handleError(w, r, ErrBadRequest.Wrap(err))
 		return
 	}
 
@@ -130,7 +131,7 @@ func (h *Handlers) AddDatesToGroup(w http.ResponseWriter, r *http.Request) {
 	}
 	msg, err := h.Service.AddDatesToGroup(userID, req.GroupID, dates)
 	if err != nil {
-		handleError(w, r, ErrContextInvalid, http.StatusInternalServerError)
+		handleError(w, r, ErrInternalServerError.Wrap(err))
 		return
 	}
 
@@ -146,13 +147,13 @@ func (h *Handlers) AddUsersToGroup(w http.ResponseWriter, r *http.Request) {
 	// }
 	var req AddUsersToGroupReq
 	if err := handlers.FromRequest(r, &req); err != nil {
-		handleError(w, r, ErrContextInvalid, http.StatusInternalServerError)
+		handleError(w, r, ErrBadRequest.Wrap(err))
 		return
 	}
 
 	msg, err := h.Service.AddUsersToGroup(req.Usernames, req.GroupID)
 	if err != nil {
-		handleError(w, r, ErrContextInvalid, http.StatusInternalServerError)
+		handleError(w, r, ErrInternalServerError.Wrap(err))
 		return
 	}
 
@@ -164,19 +165,19 @@ func (h *Handlers) GetGroupDetails(w http.ResponseWriter, r *http.Request) {
 	groupIDStr := chi.URLParam(r, "groupID")
 	groupID, err := uuid.Parse(groupIDStr)
 	if err != nil {
-		handleError(w, r, ErrContextInvalid, http.StatusBadRequest)
+		handleError(w, r, ErrBadRequest.Wrap(err))
 		return
 	}
 
 	userID, ok := getUserIDFromContext(r)
 	if !ok {
-		handleError(w, r, ErrContextInvalid, http.StatusInternalServerError)
+		handleError(w, r, ErrInvalidContext)
 		return
 	}
 
 	groupDetails, groupDates, groupUsers, svcErr := h.Service.GetGroupDetails(userID, groupID)
 	if svcErr != nil {
-		handleError(w, r, ErrContextInvalid, http.StatusInternalServerError)
+		handleError(w, r, ErrInternalServerError.Wrap(err))
 		return
 	}
 

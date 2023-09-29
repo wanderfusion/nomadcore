@@ -1,7 +1,12 @@
 package auth
 
-import "errors"
+import (
+	"net/http"
+
+	"github.com/akxcix/nomadcore/pkg/errors"
+)
 
 var (
-	ErrInvalidJwt = errors.New("invalid jwt")
+	ErrInvalidRefreshToken = errors.NewAPIError("invalid refresh token", http.StatusBadRequest)
+	ErrInvalidAuthToken    = errors.NewAPIError("invalid auth token", http.StatusBadRequest)
 )

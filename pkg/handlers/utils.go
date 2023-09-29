@@ -2,9 +2,9 @@ package handlers
 
 import (
 	"encoding/json"
-	"errors"
-	"fmt"
 	"net/http"
+
+	"github.com/akxcix/nomadcore/pkg/errors"
 
 	"github.com/rs/zerolog/log"
 )
@@ -16,6 +16,14 @@ type response struct {
 	Error  string      `json:"error,omitempty"`
 }
 
+func NewInternalServerError(err error) errors.APIError {
+	return errors.APIError{
+		Msg:    "Something went wrong...",
+		Err:    err,
+		Status: http.StatusInternalServerError,
+	}
+}
+
 func RespondWithData(w http.ResponseWriter, r *http.Request, data interface{}) {
 	res := &response{
 		Status: http.StatusOK,
@@ -25,7 +33,7 @@ func RespondWithData(w http.ResponseWriter, r *http.Request, data interface{}) {
 	json, err := json.Marshal(res)
 	if err != nil {
 		log.Error().Err(err).Msg("Unable to marshall data json.")
-		RespondWithError(w, r, err, http.StatusInternalServerError)
+		RespondWithError(w, r, NewInternalServerError(err))
 		return
 	}
 
@@ -34,27 +42,25 @@ func RespondWithData(w http.ResponseWriter, r *http.Request, data interface{}) {
 	w.Write(json)
 }
 
-func RespondWithError(w http.ResponseWriter, r *http.Request, e error, status int) {
+func RespondWithError(w http.ResponseWriter, r *http.Request, e errors.Error) {
 	res := &response{
-		Status: status,
-		Error:  e.Error(),
+		Status: e.GetStatusCode(),
+		Error:  e.GetMsg(),
 	}
 
 	json, err := json.Marshal(res)
 	if err != nil {
 		log.Error().Err(err).Msg("Unable to marshall error json.")
-		status = http.StatusInternalServerError
-		err := errors.New("something bad happened")
-		json = []byte(fmt.Sprintf("{\"status\":%d,\"error\":\"%s\"}", status, err.Error()))
+		json = []byte("{\"status\": 200, \"error\": \"Something went wrong\"}")
 	}
 
 	log.Error().
 		Err(err).
-		Interface("status", status).
-		Msg(http.StatusText(status))
+		Interface("status", e.GetStatusCode()).
+		Msg(e.GetMsg())
 
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
+	w.WriteHeader(e.GetStatusCode())
 	w.Write(json)
 }
 
