@@ -6,8 +6,10 @@ import (
 	"github.com/akxcix/nomadcore/pkg/handlers"
 	authHandlers "github.com/akxcix/nomadcore/pkg/handlers/auth"
 	groupHandlers "github.com/akxcix/nomadcore/pkg/handlers/group"
+	usersHandlers "github.com/akxcix/nomadcore/pkg/handlers/users"
 	"github.com/akxcix/nomadcore/pkg/services/auth"
 	"github.com/akxcix/nomadcore/pkg/services/group"
+	"github.com/akxcix/nomadcore/pkg/services/users"
 	"github.com/rs/zerolog/log"
 
 	"github.com/go-chi/chi/v5"
@@ -17,7 +19,7 @@ import (
 	"github.com/ulule/limiter/v3/drivers/store/memory"
 )
 
-func createRoutes(authService *auth.Service, groupService *group.Service) *chi.Mux {
+func createRoutes(authService *auth.Service, groupService *group.Service, usersService *users.Service) *chi.Mux {
 	r := chi.NewRouter()
 
 	// Apply global middlewares
@@ -26,9 +28,10 @@ func createRoutes(authService *auth.Service, groupService *group.Service) *chi.M
 	// Initialize handlers
 	groupHandler := groupHandlers.New(groupService)
 	authHandler := authHandlers.New(authService)
+	usersHandler := usersHandlers.New(usersService)
 
 	// Define routes
-	defineRoutes(r, authHandler, groupHandler)
+	defineRoutes(r, authHandler, groupHandler, usersHandler)
 
 	return r
 }
@@ -39,7 +42,7 @@ func applyGlobalMiddlewares(r *chi.Mux) {
 	r.Use(handlers.LogRequest)
 }
 
-func defineRoutes(r *chi.Mux, auth *authHandlers.Handlers, group *groupHandlers.Handlers) {
+func defineRoutes(r *chi.Mux, auth *authHandlers.Handlers, group *groupHandlers.Handlers, users *usersHandlers.Handlers) {
 	// Health Check Route
 	r.Get("/health", handlers.HealthCheck)
 
@@ -51,6 +54,10 @@ func defineRoutes(r *chi.Mux, auth *authHandlers.Handlers, group *groupHandlers.
 		r.Post("/new", group.CreateGroup)
 		r.Post("/dates/new", group.AddDatesToGroup)
 		r.Post("/users/new", group.AddUsersToGroup) // Add users to group
+	})
+
+	r.Route("/users", func(r chi.Router) {
+		r.Get("/{username}", users.GetUserProfile)
 	})
 
 	// // User Routes
