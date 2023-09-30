@@ -2,6 +2,7 @@ package users
 
 import (
 	"errors"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
@@ -61,7 +62,7 @@ func (s *Service) GetUserProfile(username string) (users.UserProfile, services.S
 
 func (s *Service) getUserIDsFromUsernames(usernames []string) (map[string]uuid.UUID, error) {
 	userIDs := make(map[string]uuid.UUID)
-	res, err := s.passportClient.GetUsersFromUsernames(usernames)
+	res, err := s.passportClient.CachedGetUsersFromUsernames(usernames, 5*time.Hour)
 	if err != nil {
 		log.Error().Err(err).Msg("unable to get users from passport")
 		return nil, errors.New("unable to get users from passport")
