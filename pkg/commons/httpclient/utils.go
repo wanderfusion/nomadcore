@@ -1,3 +1,4 @@
+// Package httpclient provides utilities for making HTTP requests.
 package httpclient
 
 import (
@@ -7,48 +8,59 @@ import (
 	"net/http"
 )
 
-// MakePOSTRequest makes a POST request and returns the response as a byte array.
+// MakePOSTRequest performs a POST HTTP request and returns the response as a byte array.
+// Parameters:
+// - client: The http.Client to use for the request.
+// - baseURL: The base URL for the request.
+// - endpoint: The API endpoint for the request.
+// - payload: The request payload.
+// - customHeaders: Additional HTTP headers.
+// - customQueryParams: Additional query parameters.
 func MakePOSTRequest[T any](client *http.Client, baseURL string, endpoint string, payload T, customHeaders map[string]string, customQueryParams map[string]string) ([]byte, error) {
-	// Marshal the payload to JSON
+	// Prepare request body
 	jsonPayload, err := json.Marshal(payload)
 	if err != nil {
 		return nil, err
 	}
+	bodyBuffer := bytes.NewBuffer(jsonPayload)
 
-	// Construct the full URL
+	// Prepare request
 	fullURL := baseURL + endpoint
-
-	// Create the request
-	req, err := http.NewRequest("POST", fullURL, bytes.NewBuffer(jsonPayload))
+	req, err := http.NewRequest("POST", fullURL, bodyBuffer)
 	if err != nil {
 		return nil, err
 	}
 
-	req.Header.Set("Accept", "application/json")
-	// Add custom headers if provided
-	for key, value := range customHeaders {
-		req.Header.Set(key, value)
-	}
+	// Set default and custom headers
+	setHeaders(req, customHeaders)
 
-	// Add custom query parameters if provided
-	q := req.URL.Query()
-	for key, value := range customQueryParams {
-		q.Add(key, value)
-	}
-	req.URL.RawQuery = q.Encode()
+	// Add query parameters
+	addQueryParameters(req, customQueryParams)
 
-	// Make the request
+	// Execute request
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
 
-	// Read the response body
-	respBody, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
+	// Read and return response
+	return io.ReadAll(resp.Body)
+}
 
-	return respBody, nil
+// setHeaders sets default and custom headers for an HTTP request.
+func setHeaders(req *http.Request, customHeaders map[string]string) {
+	req.Header.Set("Accept", "application/json")
+	for key, value := range customHeaders {
+		req.Header.Set(key, value)
+	}
+}
+
+// addQueryParameters adds custom query parameters to an HTTP request.
+func addQueryParameters(req *http.Request, customQueryParams map[string]string) {
+	q := req.URL.Query()
+	for key, value := range customQueryParams {
+		q.Add(key, value)
+	}
+	req.URL.RawQuery = q.Encode()
 }
