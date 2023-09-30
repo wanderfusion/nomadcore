@@ -1,8 +1,10 @@
+// Package app contains core application logic and routing.
 package app
 
 import (
 	"net/http"
 
+	// Import various packages and handlers
 	"github.com/akxcix/nomadcore/pkg/handlers"
 	authHandlers "github.com/akxcix/nomadcore/pkg/handlers/auth"
 	groupHandlers "github.com/akxcix/nomadcore/pkg/handlers/group"
@@ -19,55 +21,53 @@ import (
 	"github.com/ulule/limiter/v3/drivers/store/memory"
 )
 
+// createRoutes initializes the router and applies routes and middleware.
 func createRoutes(authService *auth.Service, groupService *group.Service, usersService *users.Service) *chi.Mux {
 	r := chi.NewRouter()
 
-	// Apply global middlewares
+	// Apply global middleware
 	applyGlobalMiddlewares(r)
 
-	// Initialize handlers
+	// Initialize service handlers
 	groupHandler := groupHandlers.New(groupService)
 	authHandler := authHandlers.New(authService)
 	usersHandler := usersHandlers.New(usersService)
 
-	// Define routes
+	// Define API routes
 	defineRoutes(r, authHandler, groupHandler, usersHandler)
 
 	return r
 }
 
+// applyGlobalMiddlewares applies middleware that affect all routes.
 func applyGlobalMiddlewares(r *chi.Mux) {
 	r.Use(getCorsHandler())
 	r.Use(newRateLimiter().rateLimitMiddleware())
 	r.Use(handlers.LogRequest)
 }
 
+// defineRoutes specifies the API endpoints and their corresponding handlers.
 func defineRoutes(r *chi.Mux, auth *authHandlers.Handlers, group *groupHandlers.Handlers, users *usersHandlers.Handlers) {
-	// Health Check Route
+	// Health Check
 	r.Get("/health", handlers.HealthCheck)
 
-	// Group Routes
+	// Group-related routes
 	r.Route("/groups", func(r chi.Router) {
 		r.Use(auth.AuthMiddleware)
 		r.Get("/me", group.GetGroups)
-		r.Get("/{groupID}", group.GetGroupDetails) // Get group by ID
+		r.Get("/{groupID}", group.GetGroupDetails)
 		r.Post("/new", group.CreateGroup)
 		r.Post("/dates/new", group.AddDatesToGroup)
-		r.Post("/users/new", group.AddUsersToGroup) // Add users to group
+		r.Post("/users/new", group.AddUsersToGroup)
 	})
 
+	// User-related routes
 	r.Route("/users", func(r chi.Router) {
 		r.Get("/{username}", users.GetUserProfile)
 	})
-
-	// // User Routes
-	// r.Route("/users", func(r chi.Router) {
-	// 	r.Use(auth.AuthMiddleware)
-	// 	r.Get("/{username}/profile", auth.GetUserProfileByID) // Get user profile by ID
-	// })
 }
 
-// cors -------------------------------------------------------------------------------------------
+// CORS Middleware settings
 func getCorsHandler() func(next http.Handler) http.Handler {
 	return cors.Handler(cors.Options{
 		AllowedOrigins:   []string{"https://*", "http://*"},
@@ -79,27 +79,28 @@ func getCorsHandler() func(next http.Handler) http.Handler {
 	})
 }
 
-// rate limiter -----------------------------------------------------------------------------------
+// RateLimiter holds rate limiting settings.
 type RateLimiter struct {
 	store limiter.Store
 	rate  limiter.Rate
 }
 
+// Initialize a new rate limiter.
 func newRateLimiter() *RateLimiter {
 	rate, err := limiter.NewRateFromFormatted("500-M")
 	if err != nil {
-		log.Fatal().Err(err).Msg("unable to initialise limiter")
+		log.Fatal().Err(err).Msg("Failed to initialize rate limiter")
 	}
 
 	store := memory.NewStore()
 
-	limiter := RateLimiter{
+	return &RateLimiter{
 		store: store,
 		rate:  rate,
 	}
-	return &limiter
 }
 
+// rateLimitMiddleware applies the rate limiting middleware.
 func (l *RateLimiter) rateLimitMiddleware() func(h http.Handler) http.Handler {
 	middleware := mhttp.NewMiddleware(limiter.New(
 		l.store,
