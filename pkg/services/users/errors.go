@@ -15,4 +15,5 @@ var (
 	// 4xx ----------------------------------------------------------------------------------------
 	ErrInvalidRequest services.ServiceError = errors.New("the request is invalid")
 	ErrUserForbidden  services.ServiceError = errors.New("the user is forbidden to access this resource")
+	ErrNoRowFound     services.ServiceError = errors.New("no row found")
 )

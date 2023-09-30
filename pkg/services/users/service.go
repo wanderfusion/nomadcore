@@ -1,6 +1,7 @@
 package users
 
 import (
+	"database/sql"
 	"errors"
 	"time"
 
@@ -53,6 +54,10 @@ func (s *Service) GetUserProfile(username string) (users.UserProfile, services.S
 
 	userProfile, err := s.userRepo.GetUserProfileByID(userID)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			log.Error().Msg("no row found")
+			return users.UserProfile{}, ErrNoRowFound // Assuming ErrNoRowFound is a predefined error constant
+		}
 		log.Error().Err(err).Msg("something went wrong")
 		return users.UserProfile{}, ErrFailedDBRead
 	}

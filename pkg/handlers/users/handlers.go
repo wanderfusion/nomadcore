@@ -30,6 +30,10 @@ func (h *Handlers) GetUserProfile(w http.ResponseWriter, r *http.Request) {
 
 	userProfile, err := h.Service.GetUserProfile(username)
 	if err != nil {
+		if err == users.ErrNoRowFound {
+			handlers.RespondWithError(w, r, ErrDataNotFund.Wrap(err))
+			return
+		}
 		handlers.RespondWithError(w, r, ErrInternalServerError.Wrap(err))
 		return
 	}
