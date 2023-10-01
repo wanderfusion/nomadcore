@@ -147,6 +147,53 @@ func (db *Database) AddDatesToGroup(userID, groupID uuid.UUID, from, to time.Tim
 	return tx.Commit()
 }
 
+func (db *Database) AddEventToGroup(event GroupEvent) error {
+	createdAt := time.Now()
+	updatedAt := time.Now()
+	startTime := event.StartTime
+	endTime := event.EndTime
+	eventType := event.Type
+	description := event.Description
+	title := event.Title
+	author := event.Author
+	metadata := event.Metadata
+	groupID := event.GroupID
+
+	query := `
+	INSERT INTO 
+		group_events (created_at, updated_at, start_time, end_time, type, description, title, author, metadata, group_id)
+	VALUES
+		($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+	`
+
+	tx := db.db.MustBegin()
+	_, err := tx.Exec(query, createdAt, updatedAt, startTime, endTime, eventType, description, title, author, metadata, groupID)
+	if err != nil {
+		return err
+	}
+	return tx.Commit()
+}
+
+func (db *Database) GetEventFromGroup(groupID uuid.UUID, limit int, offset int) ([]GroupEvent, error) {
+	events := []GroupEvent{}
+	query := `
+        SELECT
+            *
+        FROM
+            public.group_events
+        WHERE
+            group_id = $1
+        LIMIT $2 OFFSET $3
+    `
+
+	err := db.db.Select(&events, query, groupID, limit, offset)
+	if err != nil {
+		return nil, err
+	}
+
+	return events, nil
+}
+
 func (db *Database) GetUserProfileByID(userID uuid.UUID) (UserProfile, error) {
 	query := `
 		SELECT

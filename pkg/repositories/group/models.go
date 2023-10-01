@@ -47,3 +47,15 @@ type GroupUser struct {
 	GroupID uuid.UUID `db:"group_id"`
 	UserID  uuid.UUID `db:"user_id"`
 }
+
+type GroupEvent struct {
+	BaseTable
+	StartTime   time.Time
+	EndTime     time.Time
+	Type        string
+	Description string
+	Title       string
+	Author      uuid.UUID
+	Metadata    string
+	GroupID     uuid.UUID
+}
