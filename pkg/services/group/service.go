@@ -7,10 +7,10 @@ import (
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 
-	"github.com/akxcix/nomadcore/pkg/clients/passport"
-	"github.com/akxcix/nomadcore/pkg/config"
-	"github.com/akxcix/nomadcore/pkg/repositories/group"
-	"github.com/akxcix/nomadcore/pkg/services"
+	"github.com/wanderfusion/nomadcore/pkg/clients/passport"
+	"github.com/wanderfusion/nomadcore/pkg/config"
+	"github.com/wanderfusion/nomadcore/pkg/repositories/group"
+	"github.com/wanderfusion/nomadcore/pkg/services"
 )
 
 type Service struct {

@@ -5,14 +5,14 @@ import (
 	"net/http"
 
 	// Import various packages and handlers
-	"github.com/akxcix/nomadcore/pkg/handlers"
-	authHandlers "github.com/akxcix/nomadcore/pkg/handlers/auth"
-	groupHandlers "github.com/akxcix/nomadcore/pkg/handlers/group"
-	usersHandlers "github.com/akxcix/nomadcore/pkg/handlers/users"
-	"github.com/akxcix/nomadcore/pkg/services/auth"
-	"github.com/akxcix/nomadcore/pkg/services/group"
-	"github.com/akxcix/nomadcore/pkg/services/users"
 	"github.com/rs/zerolog/log"
+	"github.com/wanderfusion/nomadcore/pkg/handlers"
+	authHandlers "github.com/wanderfusion/nomadcore/pkg/handlers/auth"
+	groupHandlers "github.com/wanderfusion/nomadcore/pkg/handlers/group"
+	usersHandlers "github.com/wanderfusion/nomadcore/pkg/handlers/users"
+	"github.com/wanderfusion/nomadcore/pkg/services/auth"
+	"github.com/wanderfusion/nomadcore/pkg/services/group"
+	"github.com/wanderfusion/nomadcore/pkg/services/users"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"

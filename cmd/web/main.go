@@ -4,7 +4,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/akxcix/nomadcore/pkg/app"
+	"github.com/wanderfusion/nomadcore/pkg/app"
 )
 
 // main is the entry function for the application.

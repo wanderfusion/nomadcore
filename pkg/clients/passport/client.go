@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/akxcix/nomadcore/pkg/cache"
-	"github.com/akxcix/nomadcore/pkg/commons/httpclient"
+	"github.com/wanderfusion/nomadcore/pkg/cache"
+	"github.com/wanderfusion/nomadcore/pkg/commons/httpclient"
 )
 
 // Client struct encapsulates HTTP client and host information for Passport service.

@@ -3,10 +3,10 @@ package group
 import (
 	"net/http"
 
-	"github.com/akxcix/nomadcore/pkg/errors"
-	"github.com/akxcix/nomadcore/pkg/handlers"
-	"github.com/akxcix/nomadcore/pkg/services/group"
 	"github.com/go-chi/chi/v5"
+	"github.com/wanderfusion/nomadcore/pkg/errors"
+	"github.com/wanderfusion/nomadcore/pkg/handlers"
+	"github.com/wanderfusion/nomadcore/pkg/services/group"
 
 	"github.com/google/uuid"
 )

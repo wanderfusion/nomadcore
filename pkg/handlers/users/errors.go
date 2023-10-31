@@ -3,7 +3,7 @@ package users
 import (
 	"net/http"
 
-	"github.com/akxcix/nomadcore/pkg/errors"
+	"github.com/wanderfusion/nomadcore/pkg/errors"
 )
 
 var (

@@ -5,13 +5,13 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/akxcix/nomadcore/pkg/config"
-	"github.com/akxcix/nomadcore/pkg/services/auth"
-	"github.com/akxcix/nomadcore/pkg/services/group"
-	"github.com/akxcix/nomadcore/pkg/services/users"
 	"github.com/go-chi/chi/v5"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+	"github.com/wanderfusion/nomadcore/pkg/config"
+	"github.com/wanderfusion/nomadcore/pkg/services/auth"
+	"github.com/wanderfusion/nomadcore/pkg/services/group"
+	"github.com/wanderfusion/nomadcore/pkg/services/users"
 )
 
 // application struct holds the app configuration.

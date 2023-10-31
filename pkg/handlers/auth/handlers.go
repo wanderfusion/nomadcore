@@ -6,9 +6,9 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/akxcix/nomadcore/pkg/handlers"
-	"github.com/akxcix/nomadcore/pkg/services/auth"
 	"github.com/google/uuid"
+	"github.com/wanderfusion/nomadcore/pkg/handlers"
+	"github.com/wanderfusion/nomadcore/pkg/services/auth"
 )
 
 type Handlers struct {

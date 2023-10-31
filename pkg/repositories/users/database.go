@@ -1,10 +1,10 @@
 package users
 
 import (
-	"github.com/akxcix/nomadcore/pkg/config"
-	"github.com/akxcix/nomadcore/pkg/repositories"
 	"github.com/jmoiron/sqlx"
 	"github.com/rs/zerolog/log"
+	"github.com/wanderfusion/nomadcore/pkg/config"
+	"github.com/wanderfusion/nomadcore/pkg/repositories"
 
 	_ "github.com/lib/pq"
 )

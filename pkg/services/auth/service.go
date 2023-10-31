@@ -3,8 +3,8 @@ package auth
 import (
 	"github.com/rs/zerolog/log"
 
-	"github.com/akxcix/nomadcore/pkg/config"
-	"github.com/akxcix/nomadcore/pkg/jwt"
+	"github.com/wanderfusion/nomadcore/pkg/config"
+	"github.com/wanderfusion/nomadcore/pkg/jwt"
 )
 
 type Service struct {

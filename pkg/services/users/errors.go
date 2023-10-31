@@ -3,7 +3,7 @@ package users
 import (
 	"errors"
 
-	"github.com/akxcix/nomadcore/pkg/services"
+	"github.com/wanderfusion/nomadcore/pkg/services"
 )
 
 var (

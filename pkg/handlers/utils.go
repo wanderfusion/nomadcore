@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/akxcix/nomadcore/pkg/errors"
+	"github.com/wanderfusion/nomadcore/pkg/errors"
 
 	"github.com/rs/zerolog/log"
 )

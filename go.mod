@@ -1,4 +1,4 @@
-module github.com/akxcix/nomadcore
+module github.com/wanderfusion/nomadcore
 
 go 1.19
 
