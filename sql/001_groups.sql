@@ -1,5 +1,4 @@
 -- Write your migrate up statements here
--- auto-generated definition
 create table groups
 (
     id          uuid      default gen_random_uuid() not null
@@ -13,6 +12,3 @@ create table groups
 
 ---- create above / drop below ----
 drop table groups;
-
--- Write your migrate down statements here. If this migration is irreversible
--- Then delete the separator line above.
