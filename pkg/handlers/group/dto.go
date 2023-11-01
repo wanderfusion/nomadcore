@@ -38,9 +38,9 @@ type GetGroupDetailsRes struct {
 type GroupDTO struct {
 	ID          uuid.UUID `json:"id"`
 	CreatedAt   time.Time `json:"createdAt"`
+	UpdatedAt   time.Time `json:"updatedAt"`
 	Name        string    `json:"name"`
 	Description *string   `json:"description"`
-	Dates       []DateDTO `json:"dates"`
 }
 
 type DateDTO struct {

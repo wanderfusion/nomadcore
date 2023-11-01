@@ -66,41 +66,14 @@ func (h *Handlers) GetGroups(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	groupIDs := make([]uuid.UUID, 0)
-	for _, calendar := range groups {
-		groupIDs = append(groupIDs, calendar.ID)
-	}
-
-	dates, err := h.Service.GetDates(groupIDs)
-	if err != nil {
-		handleError(w, r, ErrInternalServerError.Wrap(err))
-		return
-	}
-
-	dateMap := make(map[uuid.UUID][]DateDTO)
-	for _, date := range dates {
-		if _, exists := dateMap[date.GroupID]; !exists {
-			dateMap[date.GroupID] = make([]DateDTO, 0)
-		}
-
-		dateSlice := dateMap[date.GroupID]
-		dateSlice = append(dateSlice, DateDTO{
-			ID:   date.ID,
-			From: date.FromDate,
-			To:   date.ToDate,
-		})
-		dateMap[date.GroupID] = dateSlice
-	}
-
 	groupDTOs := make([]GroupDTO, 0)
 	for _, cal := range groups {
-		dateDtos := dateMap[cal.ID]
-
 		calDto := GroupDTO{
 			ID:          cal.ID,
+			CreatedAt:   cal.CreatedAt,
+			UpdatedAt:   cal.UpdatedAt,
 			Name:        cal.Name,
 			Description: cal.Description,
-			Dates:       dateDtos,
 		}
 
 		groupDTOs = append(groupDTOs, calDto)
