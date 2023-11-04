@@ -1,5 +1,4 @@
-# nomadcore
-[![Docker](https://github.com/wanderfusion/nomadcore/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/wanderfusion/nomadcore/actions/workflows/docker-publish.yml)
+# nomadcore · [![Docker](https://github.com/wanderfusion/nomadcore/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/wanderfusion/nomadcore/actions/workflows/docker-publish.yml)
 ## Running
 ### Local Build
 ```
